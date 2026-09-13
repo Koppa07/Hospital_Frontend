@@ -1,0 +1,70 @@
+.disease__container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.disease__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.disease__header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1a1a1a;
+}
+
+.diseases__error {
+  background-color: #ffebe9;
+  border: 1px solid #ffc1ce;
+  color: #cf222e;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.diseases__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.disease__card {
+  background-color: #ffffff;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.disease__card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.disease__card-body h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+  color: #24292e;
+}
+
+.disease__card-body p {
+  margin: 6px 0;
+  color: #586069;
+  font-size: 0.95rem;
+}
+
+.diseases__empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #6a737d;
+  padding: 40px 0;
+}
