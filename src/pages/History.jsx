@@ -92,7 +92,6 @@ function History() {
                   <span style={{ color: "#666" }}>Статус: {record.status}</span>
                 </div>
 
-                {/* Администраторам и Регистраторам показываем полную информацию о врачах и пациентах */}
                 {!isPatient && (
                   <p style={{ margin: "4px 0" }}>
                     <strong>Пациент:</strong> {record.patient_name} (Карта №

@@ -29,7 +29,8 @@ function CancelAppointmentModal({ appointment, onClose, onSuccess }) {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="form__input"
+              className="my__input"
+              required
             >
               <option value="CANCELLED">Отменено (CANCELLED)</option>
               <option value="NO_SHOW">Пациент не явился (NO_SHOW)</option>
@@ -37,18 +38,10 @@ function CancelAppointmentModal({ appointment, onClose, onSuccess }) {
           </div>
 
           <div className="modal__actions">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn--secondary"
-            >
+            <button type="button" onClick={onClose} className="btn--second">
               Отмена
             </button>
-            <button
-              type="submit"
-              className="btn btn--danger"
-              disabled={loading}
-            >
+            <button type="submit" className="btn--danger" disabled={loading}>
               {loading ? "Сохранение..." : "Подтвердить"}
             </button>
           </div>

@@ -6,6 +6,7 @@ function Doctors() {
   const [doctors, setDoctors] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [specialties, setSpecialties] = useState([]);
+  const [rooms, setRooms] = useState([]);
 
   const [filters, setFilters] = useState({
     dep: "",
@@ -28,12 +29,14 @@ function Doctors() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [depRes, specRes] = await Promise.all([
+        const [depRes, specRes, roomRes] = await Promise.all([
           api.get("/departments/").catch(() => ({ data: [] })),
-          api.get("/specialties/").catch(() => ({ data: [] })),
+          api.get("/specializations/").catch(() => ({ data: [] })),
+          api.get("/rooms/").catch(() => ({ data: [] })),
         ]);
         setDepartments(depRes.data);
         setSpecialties(specRes.data);
+        setRooms(roomRes.data);
       } catch (err) {
         console.error("Ошибка загрузки опций для формы:", err);
       }
@@ -45,11 +48,12 @@ function Doctors() {
     setError(null);
     try {
       const params = {};
-      if (filters.spec) params.spec = filters.spec;
-      if (filters.dep) params.dep = filters.dep;
-      if (filters.doctor_name) params.doctor_name = filters.doctor_name;
+      if (filters.spec) params["spec__spec_title__icontains"] = filters.spec;
+      if (filters.dep) params["dep__dep_title__icontains"] = filters.dep;
+      if (filters.doctor_name)
+        params["doctor_name__icontains"] = filters.doctor_name;
 
-      const res = await api.get("/doctors/", { params });
+      const res = await api.get("/doctors/list/", { params });
       setDoctors(res.data);
     } catch (err) {
       setError(
@@ -134,16 +138,11 @@ function Doctors() {
 
     try {
       if (editingDocId) {
-        const res = await api.put(`/doctors/${editingDocId}/`, formData);
-        setDoctors((prev) =>
-          prev.map((item) =>
-            (item.doctor_id || item.id) === editingDocId ? res.data : item,
-          ),
-        );
+        await api.put(`/doctors/${editingDocId}/`, formData);
       } else {
-        const res = await api.post("/doctors/", formData);
-        setDoctors((prev) => [...prev, res.data]);
+        await api.post("/doctors/", formData);
       }
+      await fetchDoctors();
       handleCloseModal();
     } catch (err) {
       const errorData = err.response?.data;
@@ -168,15 +167,15 @@ function Doctors() {
   };
 
   return (
-    <div className="doctors__container">
+    <div className="doc__container">
       <div className="doc__header">
         <h2>Список врачей</h2>
-        <button onClick={handleOpenAddModal} className="btn btn--primary">
+        <button onClick={handleOpenAddModal} className="btn--prime">
           + Добавить врача
         </button>
       </div>
 
-      <div className="doctors__filters">
+      <div className="docs__filters">
         <div className="filter__group">
           <label>Отделение:</label>
           <input
@@ -184,8 +183,8 @@ function Doctors() {
             name="dep"
             value={filters.dep}
             onChange={handleFilterChange}
-            placeholder="Поиск по названию отделения"
-            className="doctors__input"
+            placeholder="Поиск по отделения"
+            className="my__input"
           />
         </div>
         <div className="filter__group">
@@ -196,7 +195,7 @@ function Doctors() {
             value={filters.spec}
             onChange={handleFilterChange}
             placeholder="Поиск по специализации"
-            className="doctors__input"
+            className="my__input"
           />
         </div>
         <div className="filter__group">
@@ -207,61 +206,49 @@ function Doctors() {
             value={filters.doctor_name}
             onChange={handleFilterChange}
             placeholder="Поиск по ФИО врача"
-            className="doctors__input"
+            className="my__input"
           />
         </div>
         <button
           type="button"
           onClick={handleResetFilters}
-          className="doctors__reset-btn"
+          className="btn--second"
         >
           Сбросить фильтры
         </button>
       </div>
 
-      {error && <div className="doctors__error">{error}</div>}
+      {error && <div className="docs__error">{error}</div>}
 
-      <div className="doctors__grid">
+      <div className="docs__grid">
         {doctors.length > 0 ? (
           doctors.map((doc) => (
-            <div key={doc.id || doc.doctor_id} className="doctor__card">
-              <div className="doctor__card-body">
+            <div key={doc.id || doc.doctor_id} className="doc__card">
+              <div className="doc__card-body">
                 <h3>{doc.doctor_name || doc.user?.username}</h3>
                 <p>
                   <strong>Специализация:</strong>{" "}
-                  {doc.specialization ||
-                    doc.spec ||
-                    doc.spec_title ||
-                    "Не указана"}
+                  {doc.spec_title || "Не указана"}
                 </p>
                 <p>
-                  <strong>Отделение:</strong>{" "}
-                  {doc.department_name ||
-                    doc.department?.name ||
-                    doc.dep_title ||
-                    doc.dep ||
-                    "Не указано"}
+                  <strong>Отделение:</strong> {doc.dep_title || "Не указано"}
                 </p>
                 {doc.room && (
                   <p>
-                    <strong>Кабинет:</strong>{" "}
-                    {doc.room ||
-                      doc.room_number ||
-                      doc.room?.number ||
-                      "Не указан"}
+                    <strong>Кабинет: </strong> {doc.room_number}
                   </p>
                 )}
               </div>
               <div className="doc__card-actions">
                 <button
                   onClick={() => handleOpenEditModal(doc)}
-                  className="doc__edit-btn"
+                  className="btn--second"
                 >
                   Редактировать
                 </button>
                 <button
                   onClick={() => handleDelete(doc)}
-                  className="doc__delete-btn"
+                  className="btn--delete"
                 >
                   Удалить
                 </button>
@@ -269,7 +256,7 @@ function Doctors() {
             </div>
           ))
         ) : (
-          <p className="doctors__empty">Врачи по вашему запросу не найдены.</p>
+          <p className="docs__empty">Врачи по вашему запросу не найдены.</p>
         )}
       </div>
 
@@ -292,7 +279,7 @@ function Doctors() {
                   onChange={handleInputChange}
                   required
                   placeholder="Введите ФИО"
-                  className="form__input"
+                  className="my__input"
                 />
               </div>
 
@@ -302,7 +289,8 @@ function Doctors() {
                   name="spec"
                   value={formData.spec}
                   onChange={handleInputChange}
-                  className="form__input"
+                  className="my__input"
+                  required
                 >
                   <option value="">-- Выберите специализацию --</option>
                   {specialties.map((item) => (
@@ -322,7 +310,8 @@ function Doctors() {
                   name="dep"
                   value={formData.dep}
                   onChange={handleInputChange}
-                  className="form__input"
+                  className="my__input"
+                  required
                 >
                   <option value="">-- Выберите отделение --</option>
                   {departments.map((item) => (
@@ -337,15 +326,24 @@ function Doctors() {
               </div>
 
               <div className="form__group">
-                <label className="form__label">№ Кабинета:</label>
-                <input
-                  type="text"
+                <label className="form__label">Кабинет:</label>
+                <select
                   name="room"
                   value={formData.room}
                   onChange={handleInputChange}
-                  placeholder="Введите номер кабинета"
-                  className="form__input"
-                />
+                  className="my__input"
+                  required
+                >
+                  <option value="">-- Выберите кабинет --</option>
+                  {rooms.map((item) => (
+                    <option
+                      key={item.id || item.room_id}
+                      value={item.id || item.room_id}
+                    >
+                      {item.room_number || item.number}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="modal__actions">
@@ -353,14 +351,14 @@ function Doctors() {
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="btn btn--secondary"
+                  className="btn--second"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn btn--primary"
+                  className="btn--prime"
                 >
                   {isSubmitting ? "Сохранение..." : "Сохранить"}
                 </button>

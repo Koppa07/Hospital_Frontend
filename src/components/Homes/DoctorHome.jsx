@@ -1,9 +1,11 @@
 import api from "../../api";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Homes/Doctor.css";
 import { USER_INFO } from "../../constants";
 import { useState, useEffect } from "react";
 import DoctorProfile from "../DoctorProfile";
+import Cancel from "../Appointments/Cancel";
 import ChangePassword from "../ChangePassword";
+import { Link } from "react-router-dom";
+import "../../styles/Homes/home.css";
 function DoctorHome() {
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
@@ -16,7 +18,7 @@ function DoctorHome() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const fetchProfile = async () => {
     try {
-      const res = await api.get("/doctor/profile/");
+      const res = await api.get(`/doctor/profile/`);
       setProfile(res.data);
     } catch (err) {
       if (err.response?.status === 404) {
@@ -53,48 +55,47 @@ function DoctorHome() {
   const handleProfileSuccess = (updatedProfile) => {
     setProfile(updatedProfile);
     setModalType(null);
-    const updatedUser = { ...user, name: updatedProfile.name };
+    const updatedUser = { ...user, name: updatedProfile.doctor_name };
     localStorage.setItem(USER_INFO, JSON.stringify(updatedUser));
   };
   useEffect(() => {
     fetchProfile();
   }, []);
   return (
-    <div className="doctor-home_container">
-      <div className="doctor-home__welcome">
+    <div className="home_container">
+      <div className="home__welcome">
         <h1>
-          Добро пожаловать,{" "}
-          {profile?.name || user?.full_name || user?.username || "Врач"}!
+          Добро пожаловать, {user?.doctor_name || user?.username || "Врач"}!
         </h1>
-        <p className="doctor-home__subtitle">Личный кабинет врача</p>
+        <p className="home__subtitle">Личный кабинет врача</p>
       </div>
       {isProfileLoaded && !profile && (
-        <div className="doctor-home__warning-banner">
+        <div className="home__warning-banner">
           <p>⚠️ Для работы необходимо сначала заполнить данные врача.</p>
           <button
             onClick={() => setModalType("profile")}
-            className="btn btn--warning"
+            className="btn--second"
           >
             Заполнить данные профиля
           </button>
         </div>
       )}
 
-      {error && <div className="doctor-home__error">{error}</div>}
-      <div className="doctor-home__actions">
+      {error && <div className="home__error">{error}</div>}
+      <div className="home__actions">
         {profile && (
           <button
             onClick={() => setModalType("profile")}
-            className="btn btn--secondary"
+            className="btn--second"
           >
             Редактировать профиль
           </button>
         )}
       </div>
-      <section className="doctor-home__section">
+      <section className="home__section">
         <h2>Запланированные записи</h2>
         {upcomingAppointments.length > 0 ? (
-          <div className="doctor-home__grid">
+          <div className="home__grid">
             {upcomingAppointments.map((app) => (
               <div key={app.id || app.log_id} className="appointment-card">
                 <div className="appointment-card__header">
@@ -126,7 +127,7 @@ function DoctorHome() {
                 {app.status !== "CANCELLED" && app.status !== "COMPLETED" && (
                   <div className="appointment-card__actions">
                     <button
-                      className="btn btn--danger-outline"
+                      className="btn--prime"
                       onClick={() => {
                         setSelectedApp(app);
                         setModalType("cancel");
@@ -140,27 +141,27 @@ function DoctorHome() {
             ))}
           </div>
         ) : (
-          <p className="doctor-home__empty">У вас пока нет активных записей.</p>
+          <p className="home__empty">У вас пока нет активных записей.</p>
         )}
       </section>
-      <div className="doctor-home__reports">
-        <a href="/reports" className="go-to-reports">
+      <div className="home__reports">
+        <Link to="/reports" className="go-to">
           Справочники
-        </a>
+        </Link>
       </div>
-      <div className="doctor-home__schedule">
-        <a href="/schedule" className="go-to-schedule">
+      <div className="home__schedule">
+        <Link to="/schedule" className="go-to">
           Расписание
-        </a>
+        </Link>
       </div>
-      <div className="doctor-home__appointments">
-        <a href="/appointments" className="go-to-appointments">
+      <div className="home__appointments">
+        <Link to="/appointments" className="go-to">
           Приемы
-        </a>
+        </Link>
       </div>
-      <section className="patient-home__section">
+      <section className="home__section">
         <button
-          className="btn btn--secondary"
+          className="btn--second"
           onClick={() => setIsPasswordModalOpen(true)}
         >
           Сменить пароль

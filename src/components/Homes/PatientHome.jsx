@@ -4,9 +4,9 @@ import { USER_INFO } from "../../constants";
 import Book from "../Appointments/Book";
 import Cancel from "../Appointments/Cancel";
 import PatientProfile from "../PatientProfile";
-import "../../styles/Homes/Patient.css";
 import ChangePassword from "../ChangePassword";
-
+import { Link } from "react-router-dom";
+import "../../styles/Homes/home.css";
 function PatientHome() {
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
@@ -22,7 +22,7 @@ function PatientHome() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const fetchProfile = async () => {
     try {
-      const res = await api.get("/patient/profile/");
+      const res = await api.get(`/patient/profile/`);
       setProfile(res.data);
     } catch (err) {
       if (err.response?.status === 404) {
@@ -38,7 +38,7 @@ function PatientHome() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const doctorsRes = await api.get("/doctors/");
+        const doctorsRes = await api.get("/doctors/list/");
         setDoctors(doctorsRes.data);
       } catch (err) {
         console.error("Ошибка при загрузке врачей:", err);
@@ -95,55 +95,61 @@ function PatientHome() {
   };
 
   return (
-    <div className="patient-home_container">
-      <div className="patient-home__welcome">
+    <div className="home_container">
+      <div className="home__welcome">
         <h1>
           Добро пожаловать,{" "}
           {profile?.name || user?.full_name || user?.username || "Пациент"}!
         </h1>
-        <p className="patient-home__subtitle">Личный кабинет пациента</p>
+        <p className="home__subtitle">Личный кабинет пациента</p>
       </div>
 
       {isProfileLoaded && !profile && (
-        <div className="patient-home__warning-banner">
+        <div className="home__warning-banner">
           <p>
             ⚠️ Для записи на прием необходимо сначала заполнить персональные
             данные пациента.
           </p>
           <button
             onClick={() => setModalType("profile")}
-            className="btn btn--secondary"
+            className="btn--second"
           >
             Заполнить данные профиля
           </button>
         </div>
       )}
 
-      {error && <div className="patient-home__error">{error}</div>}
+      {error && <div className="home__error">{error}</div>}
 
-      <div className="patient-home__actions">
-        <button
-          onClick={() => setModalType("book")}
-          className="btn btn--primary"
-          disabled={!profile}
+      <div className="home__actions">
+        <div
+          className="btn-disabled-wrapper"
+          data-tooltip={!profile ? "Заполните данные пациента." : ""}
         >
-          + Записаться на прием
-        </button>
+          <button
+            onClick={() => setModalType("book")}
+            className="btn--prime"
+            disabled={!profile}
+          >
+            + Записаться на прием
+          </button>
+        </div>
 
         {profile && (
           <button
             onClick={() => setModalType("profile")}
-            className="btn btn--secondary"
+            className="btn--second"
           >
             Редактировать профиль
           </button>
         )}
       </div>
 
-      <section className="patient-home__section">
+      <section className="home__section">
+        {/*TODO ограничить число записей до двух */}
         <h2>Мои текущие записи</h2>
         {upcomingAppointments.length > 0 ? (
-          <div className="patient-home__grid">
+          <div className="home__grid">
             {upcomingAppointments.map((app) => (
               <div key={app.id || app.log_id} className="appointment-card">
                 <div className="appointment-card__header">
@@ -196,14 +202,18 @@ function PatientHome() {
             ))}
           </div>
         ) : (
-          <p className="patient-home__empty">
-            У вас пока нет активных записей.
-          </p>
+          <p className="home__empty">У вас пока нет активных записей.</p>
         )}
+        <div className="home__appointments">
+          <Link to="/appointments/" className="go-to">
+            Все записи
+          </Link>
+        </div>
       </section>
 
-      <section className="patient-home__section">
+      <section className="home__section">
         <h2>Медицинская карта и история визитов</h2>
+        {/*TODO Сделать ссылку на историю болезни, ограничить число записей до двух */}
         {medicalHistory.length > 0 ? (
           <div className="history-list">
             {medicalHistory.map((item) => (
@@ -232,12 +242,17 @@ function PatientHome() {
             ))}
           </div>
         ) : (
-          <p className="patient-home__empty">История приёмов пуста.</p>
+          <p className="home__empty">История приёмов пуста.</p>
         )}
+        <div className="home__history">
+          <Link to="/medical-history/" className="go-to">
+            Полная медицинская карта
+          </Link>
+        </div>
       </section>
-      <section className="patient-home__section">
+      <section className="home__section">
         <button
-          className="btn btn--secondary"
+          className="btn--second"
           onClick={() => setIsPasswordModalOpen(true)}
         >
           Сменить пароль

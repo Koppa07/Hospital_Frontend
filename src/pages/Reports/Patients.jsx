@@ -25,11 +25,13 @@ function Patients() {
     setError(null);
     try {
       const params = {};
-      if (filters.insurance) params.insurance = filters.insurance;
-      if (filters.card_number) params.card_number = filters.card_number;
-      if (filters.patient_name) params.patient_name = filters.patient_name;
+      if (filters.insurance) params["insurance__icontains"] = filters.insurance;
+      if (filters.card_number)
+        params["card_number__icontains"] = filters.card_number;
+      if (filters.patient_name)
+        params["patient_name__icontains"] = filters.patient_name;
 
-      const res = await api.get("/patients/", { params });
+      const res = await api.get("/patients/list/", { params });
       setPatients(res.data);
     } catch (err) {
       setError(
@@ -118,19 +120,11 @@ function Patients() {
 
     try {
       if (editingPatId) {
-        const res = await api.put(`/patients/${editingPatId}/`, formData);
-        setPatients((prev) =>
-          prev.map((item) =>
-            (item.patient_id || item.pat_id || item.id || item.card_number) ===
-            editingPatId
-              ? res.data
-              : item,
-          ),
-        );
+        await api.put(`/patients/${editingPatId}/`, formData);
       } else {
-        const res = await api.post("/patients/register/", formData);
-        setPatients((prev) => [...prev, res.data]);
+        await api.post("/patients/register/", formData);
       }
+      await fetchPatients();
       handleCloseModal();
     } catch (err) {
       const errorData = err.response?.data;
@@ -158,7 +152,7 @@ function Patients() {
     <div className="pat__container">
       <div className="pat__header">
         <h2>Список пациентов</h2>
-        <button onClick={handleOpenAddModal} className="btn btn--primary">
+        <button onClick={handleOpenAddModal} className="btn--prime">
           + Добавить пациента
         </button>
       </div>
@@ -167,12 +161,12 @@ function Patients() {
         <div className="filter__group">
           <label>Номер карты:</label>
           <input
-            type="text"
+            type="number"
             name="card_number"
             value={filters.card_number}
             onChange={handleFilterChange}
             placeholder="Поиск по номеру карты"
-            className="patients__input"
+            className="my__input"
           />
         </div>
         <div className="filter__group">
@@ -183,25 +177,25 @@ function Patients() {
             value={filters.patient_name}
             onChange={handleFilterChange}
             placeholder="Поиск по ФИО пациента"
-            className="patients__input"
+            className="my__input"
           />
         </div>
         <div className="filter__group">
           <label>Полис ОМС:</label>
           <input
-            type="text"
+            type="number"
             name="insurance"
             value={filters.insurance}
             onChange={handleFilterChange}
             placeholder="Поиск по номеру полиса"
-            className="patients__input"
+            className="my__input"
           />
         </div>
 
         <button
           type="button"
           onClick={handleResetFilters}
-          className="patients__reset-btn"
+          className="btn--second"
         >
           Сбросить фильтры
         </button>
@@ -246,7 +240,7 @@ function Patients() {
               <div className="pat__card-actions">
                 <button
                   onClick={() => handleOpenEditModal(pat)}
-                  className="btn btn--secondary"
+                  className="btn--second"
                 >
                   Редактировать
                 </button>
@@ -285,7 +279,7 @@ function Patients() {
                   onChange={handleInputChange}
                   required
                   placeholder="Введите ФИО"
-                  className="form__input"
+                  className="my__input"
                 />
               </div>
 
@@ -296,7 +290,8 @@ function Patients() {
                   name="birth_date"
                   value={formData.birth_date}
                   onChange={handleInputChange}
-                  className="form__input"
+                  className="my__input"
+                  required
                 />
               </div>
 
@@ -308,7 +303,7 @@ function Patients() {
                   value={formData.address}
                   onChange={handleInputChange}
                   placeholder="Введите адрес"
-                  className="form__input"
+                  className="my__input"
                 />
               </div>
 
@@ -320,7 +315,7 @@ function Patients() {
                   value={formData.insurance}
                   onChange={handleInputChange}
                   placeholder="Введите номер полиса ОМС"
-                  className="form__input"
+                  className="my__input"
                 />
               </div>
 
@@ -329,14 +324,14 @@ function Patients() {
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="btn btn--secondary"
+                  className="btn--second"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn btn--primary"
+                  className="btn--prime"
                 >
                   {isSubmitting ? "Сохранение..." : "Сохранить"}
                 </button>

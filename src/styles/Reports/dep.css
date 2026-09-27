@@ -14,7 +14,7 @@
 .dep__header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #1a1a1a;
+  color: var(--color-dark-brown);
 }
 .deps__error {
   background-color: #ffebe9;
@@ -33,64 +33,27 @@
 
 .dep__card {
   background-color: #ffffff;
-  border: 1px solid #e1e4e8;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.dep__card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .dep__card-body h3 {
   margin-top: 0;
   margin-bottom: 12px;
   font-size: 1.2rem;
-  color: #24292e;
+  color: var(--color-dark-brown);
 }
 
 .dep__card-body p {
   margin: 6px 0;
-  color: #586069;
+  color: var(--color-text-muted);
   font-size: 0.95rem;
 }
-
-.dep__card-actions {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.dep__edit-btn {
-  background-color: #f6f8fa;
-  border: 1px solid #d1d5da;
-  color: #24292e;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.dep__edit-btn:hover {
-  background-color: #f3f4f6;
-  border-color: #b0b8c1;
-}
-
-.deps__empty {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: #6a737d;
-  padding: 40px 0;
-}
-
 
 .dep__card-actions {
   display: flex;
@@ -99,19 +62,16 @@
   margin-top: 16px;
 }
 
-.dep__delete-btn {
-  background-color: #ffebe9;
-  border: 1px solid #ffc1ce;
-  color: #cf222e;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+.deps__empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 40px 0;
 }
 
-.dep__delete-btn:hover {
-  background-color: #ffe0e0;
-  border-color: #ff9baa;
+.dep__card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
 }

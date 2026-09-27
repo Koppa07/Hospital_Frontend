@@ -43,7 +43,7 @@ function CompleteAppointmentModal({ appointment, onClose, onSuccess }) {
               min="1"
               value={diseaseId}
               onChange={(e) => setDiseaseId(e.target.value)}
-              className="form__input"
+              className="my__input"
               placeholder="Введите ID заболевания"
             />
           </div>
@@ -55,7 +55,7 @@ function CompleteAppointmentModal({ appointment, onClose, onSuccess }) {
               rows="3"
               value={complains}
               onChange={(e) => setComplains(e.target.value)}
-              className="form__input"
+              className="my__input"
               placeholder="Опишите жалобы"
             />
           </div>
@@ -66,24 +66,16 @@ function CompleteAppointmentModal({ appointment, onClose, onSuccess }) {
               rows="3"
               value={recommendations}
               onChange={(e) => setRecommendations(e.target.value)}
-              className="form__input"
+              className="my__input"
               placeholder="Рекомендации по лечению"
             />
           </div>
 
           <div className="modal__actions">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn--secondary"
-            >
+            <button type="button" onClick={onClose} className="btn--second">
               Отмена
             </button>
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={loading}
-            >
+            <button type="submit" className="btn--prime" disabled={loading}>
               {loading ? "Сохранение..." : "Завершить приём"}
             </button>
           </div>

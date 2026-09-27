@@ -1,43 +1,47 @@
 import api from "../../api";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Homes/Admin.css";
+import "../../styles/Homes/home.css";
 import { USER_INFO } from "../../constants";
 import ChangePassword from "../ChangePassword";
-
+import { Link } from "react-router-dom";
+import { useState } from "react";
 function RegistrarHome() {
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   return (
-    <div className="registrar-home_container">
-      <h1>{user.username}</h1>
-      <div className="registrar-home__reports">
-        <a href="/reports" className="go-to-reports">
+    <div className="home_container">
+      <div className="home__welcome">
+        <h1>Добро пожаловать, {user.username}!</h1>
+        <p className="home__subtitle">Личный кабинет регистратора</p>
+      </div>
+      <div className="home__reports">
+        <Link to="/reports" className="go-to">
           Справочники
-        </a>
+        </Link>
       </div>
-      <div className="registrar-home__doctors">
-        <a href="/doctors" className="go-to-doctors">
+      <div className="home__doctors">
+        <Link to="/doctors" className="go-to">
           Персонал
-        </a>
+        </Link>
       </div>
-      <div className="registrar-home__schedule">
-        <a href="/schedule" className="go-to-schedule">
+      <div className="home__schedule">
+        <Link to="/schedule" className="go-to">
           Расписание
-        </a>
+        </Link>
       </div>
-      <div className="registrar-home__patients">
-        <a href="/patients" className="go-to-patients">
+      <div className="home__patients">
+        <Link to="/patients" className="go-to">
           Пациенты
-        </a>
+        </Link>
       </div>
-      <div className="registrar-home__appointments">
-        <a href="/appointments" className="go-to-appointments">
+      <div className="home__appointments">
+        <Link to="/appointments" className="go-to">
           Приемы
-        </a>
+        </Link>
       </div>
-      <section className="patient-home__section">
+      <section className="home__section">
         <button
-          className="btn btn--secondary"
+          className="btn--second"
           onClick={() => setIsPasswordModalOpen(true)}
         >
           Сменить пароль

@@ -1,0 +1,30 @@
+.layout {
+  width: 100%;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow-x: hidden;
+}
+
+.layout__body {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+
+  position: relative;
+
+  display: block;
+
+  overflow-x: hidden;
+}
+
+.layout__content {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 24px;
+  box-sizing: border-box;
+}

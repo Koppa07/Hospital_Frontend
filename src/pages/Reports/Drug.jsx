@@ -86,16 +86,11 @@ function Drug() {
 
     try {
       if (editingDrugId) {
-        const res = await api.put(`/drugs/${editingDrugId}/`, formData);
-        setDrugs((prev) =>
-          prev.map((item) =>
-            (item.drug_id || item.id) === editingDrugId ? res.data : item,
-          ),
-        );
+        await api.put(`/drugs/${editingDrugId}/`, formData);
       } else {
-        const res = await api.post("/drugs/", formData);
-        setDrugs((prev) => [...prev, res.data]);
+        await api.post("/drugs/", formData);
       }
+      await fetchDrugs();
       handleCloseModal();
     } catch (err) {
       const errorData = err.response?.data;
@@ -123,7 +118,7 @@ function Drug() {
     <div className="drug__container">
       <div className="drug__header">
         <h2>Список медикаментов</h2>
-        <button onClick={handleOpenAddModal} className="btn btn--primary">
+        <button onClick={handleOpenAddModal} className="btn--prime">
           + Добавить медикамент
         </button>
       </div>
@@ -146,13 +141,13 @@ function Drug() {
               <div className="drug__card-actions">
                 <button
                   onClick={() => handleOpenEditModal(drug)}
-                  className="drug__edit-btn"
+                  className="btn--second"
                 >
                   Редактировать
                 </button>
                 <button
                   onClick={() => handleDelete(drug)}
-                  className="drug__delete-btn"
+                  className="btn--delete"
                 >
                   Удалить
                 </button>
@@ -187,7 +182,7 @@ function Drug() {
                   onChange={handleInputChange}
                   required
                   placeholder="Введите название"
-                  className="form__input"
+                  className="my__input"
                 />
               </div>
 
@@ -199,7 +194,8 @@ function Drug() {
                   value={formData.drug_type}
                   onChange={handleInputChange}
                   placeholder="Введите тип"
-                  className="form__input"
+                  className="my__input"
+                  required
                 />
               </div>
 
@@ -208,14 +204,14 @@ function Drug() {
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="btn btn--secondary"
+                  className="btn--second"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn btn--primary"
+                  className="btn--prime"
                 >
                   {isSubmitting ? "Сохранение..." : "Сохранить"}
                 </button>

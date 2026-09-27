@@ -130,18 +130,20 @@ function Room() {
     setSubmitError(null);
     setIsSubmitting(true);
 
+    const payload = {
+      ...formData,
+      equipment: Array.isArray(formData.equipment)
+        ? formData.equipment.join(", ")
+        : formData.equipment,
+    };
+
     try {
       if (editingRoomId) {
-        const res = await api.put(`/rooms/${editingRoomId}/`, formData);
-        setRooms((prev) =>
-          prev.map((r) =>
-            (r.id || r.room_id) === editingRoomId ? res.data : r,
-          ),
-        );
+        const res = await api.put(`/rooms/${editingRoomId}/`, payload);
       } else {
-        const res = await api.post("/rooms/", formData);
-        setRooms((prev) => [...prev, res.data]);
+        await api.post("/rooms/", payload);
       }
+      fetchRooms();
       handleCloseModal();
     } catch (err) {
       const errorData = err.response?.data;
@@ -177,7 +179,7 @@ function Room() {
     <div className="room__container">
       <div className="room__header">
         <h2>Список кабинетов</h2>
-        <button onClick={handleOpenAddModal} className="btn btn--primary">
+        <button onClick={handleOpenAddModal} className="btn--prime">
           + Добавить кабинет
         </button>
       </div>
@@ -198,13 +200,13 @@ function Room() {
               <div className="room__card-actions">
                 <button
                   onClick={() => handleOpenEditModal(room)}
-                  className="room__edit-btn"
+                  className="btn--second"
                 >
                   Редактировать
                 </button>
                 <button
                   onClick={() => handleDelete(room)}
-                  className="room__delete-btn"
+                  className="btn--delete"
                 >
                   Удалить
                 </button>
@@ -237,7 +239,7 @@ function Room() {
                   onChange={handleInputChange}
                   required
                   placeholder="Введите номер"
-                  className="form__input"
+                  className="my__input"
                 />
               </div>
 
@@ -247,7 +249,7 @@ function Room() {
                   <select
                     value={selectedEquipmentItem}
                     onChange={(e) => setSelectedEquipmentItem(e.target.value)}
-                    className="form__input equipment__select"
+                    className="my__input "
                   >
                     <option value="">-- Выберите оборудование --</option>
                     {AVAILABLE_EQUIPMENT.map((item, index) => (
@@ -286,14 +288,14 @@ function Room() {
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="btn btn--secondary"
+                  className="btn--second"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn btn--primary"
+                  className="btn--prime"
                 >
                   {isSubmitting ? "Сохранение..." : "Сохранить"}
                 </button>

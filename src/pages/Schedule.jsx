@@ -1,73 +1,209 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Calendar, Editor, ContextMenu } from "@svar-ui/react-calendar";
-
-import { ruLocale } from "../locales/ru";
+import "@svar-ui/react-core/style.css";
+import "@svar-ui/react-editor/style.css";
+import "@svar-ui/react-menu/style.css";
+import "@svar-ui/react-toolbar/style.css";
 import api from "../api";
 import { USER_INFO } from "../constants";
+
+import "../styles/Schedule.css";
 
 export const Schedule = () => {
   const savedUser = localStorage.getItem(USER_INFO);
   const currentUser = savedUser ? JSON.parse(savedUser) : null;
+
   const isDoctor = currentUser?.role === "DOCTOR";
   const isAdmin = currentUser?.role === "ADMIN";
 
   const [events, setEvents] = useState([]);
   const [doctors, setDoctors] = useState([]);
+
   const [selectedDoctorId, setSelectedDoctorId] = useState(
     isDoctor ? currentUser?.id : "",
   );
 
-  const [editorState, setEditorState] = useState({ open: false, event: null });
+  const [editorState, setEditorState] = useState({
+    open: false,
+    event: null,
+  });
+
   const [contextMenuState, setContextMenuState] = useState({
     open: false,
     event: null,
     point: null,
   });
 
-  useEffect(() => {
-    if (isAdmin) {
-      api
-        .get("/doctors/")
-        .then((res) => {
-          setDoctors(res.data);
-          if (res.data.length > 0) setSelectedDoctorId(res.data[0].id);
-        })
-        .catch((err) => console.error("Ошибка загрузки списка врачей:", err));
+  const today = useMemo(() => new Date(), []);
+
+  const monthName = today.toLocaleDateString("ru-RU", {
+    month: "long",
+  });
+
+  const currentMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+  const currentYear = today.getFullYear();
+
+  const miniCalendarDays = useMemo(() => {
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+
+    const firstWeekDay = (firstDay.getDay() + 6) % 7;
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const previousMonthDays = new Date(year, month, 0).getDate();
+
+    const result = [];
+
+    for (let i = firstWeekDay - 1; i >= 0; i -= 1) {
+      result.push({
+        day: previousMonthDays - i,
+        outside: true,
+      });
     }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      result.push({
+        day,
+        outside: false,
+        today: day === today.getDate(),
+      });
+    }
+
+    while (result.length < 42) {
+      result.push({
+        day: result.length - daysInMonth - firstWeekDay + 1,
+        outside: true,
+      });
+    }
+
+    return result;
+  }, [today]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    api
+      .get("/doctors/list/")
+      .then((res) => {
+        const list = Array.isArray(res.data) ? res.data : [];
+
+        setDoctors(list);
+
+        if (list.length > 0) {
+          setSelectedDoctorId(list[0].id);
+        }
+      })
+      .catch((err) => {
+        console.error("Ошибка загрузки списка врачей:", err);
+      });
   }, [isAdmin]);
 
   useEffect(() => {
     const targetDoctorId = isDoctor ? currentUser?.id : selectedDoctorId;
-    if (!targetDoctorId) return;
+
+    if (!targetDoctorId) {
+      setEvents([]);
+      return;
+    }
 
     api
       .get(`/schedule/?doctor_id=${targetDoctorId}`)
       .then((res) => {
-        const formattedEvents = res.data.map((item) => ({
+        const schedule = Array.isArray(res.data) ? res.data : [];
+
+        const formattedEvents = schedule.map((item) => ({
           id: item.id,
-          text: `Пациент: ${item.patient_name || "Не указан"} (${item.procedure || "Прием"})`,
+
+          text: `Пациент: ${
+            item.patient_name || "Не указан"
+          } (${item.procedure || "Прием"})`,
+
           start: new Date(item.start_time),
           end: new Date(item.end_time),
-          doctorId: item.doctor,
+
+          doctorId: Number(item.doctor),
         }));
+
         setEvents(formattedEvents);
       })
-      .catch((err) => console.error("Ошибка загрузки расписания:", err));
+      .catch((err) => {
+        console.error("Ошибка загрузки расписания:", err);
+
+        setEvents([]);
+      });
   }, [selectedDoctorId, currentUser?.id, isDoctor]);
 
   const visibleEvents = useMemo(() => {
     if (isDoctor) {
-      return events.filter((e) => e.doctorId === currentUser?.id);
+      return events.filter(
+        (event) => Number(event.doctorId) === Number(currentUser?.id),
+      );
     }
-    return events.filter((e) => e.doctorId === Number(selectedDoctorId));
+
+    return events.filter(
+      (event) => Number(event.doctorId) === Number(selectedDoctorId),
+    );
   }, [events, selectedDoctorId, currentUser?.id, isDoctor]);
 
-  const handleContextMenu = (e, eventObj) => {
-    e.preventDefault();
+  const todayEvents = useMemo(() => {
+    return visibleEvents.filter((event) => {
+      const eventDate = new Date(event.start);
+
+      return (
+        eventDate.getFullYear() === today.getFullYear() &&
+        eventDate.getMonth() === today.getMonth() &&
+        eventDate.getDate() === today.getDate()
+      );
+    });
+  }, [visibleEvents, today]);
+
+  const bookedCount = todayEvents.length;
+
+  const freeCount = Math.max(0, 12 - bookedCount);
+
+  const selectedDoctor = doctors.find(
+    (doctor) => Number(doctor.id) === Number(selectedDoctorId),
+  );
+
+  const selectedDoctorName =
+    selectedDoctor?.doctor_name || selectedDoctor?.name || "Выберите врача";
+
+  const handleEventClick = (eventObj) => {
+    setEditorState({
+      open: true,
+      event: eventObj,
+    });
+  };
+
+  const handleCellClick = (date) => {
+    const start = new Date(date);
+
+    const end = new Date(start.getTime() + 15 * 60 * 1000);
+
+    setEditorState({
+      open: true,
+      event: {
+        start,
+        end,
+        text: "",
+      },
+    });
+  };
+
+  const handleContextMenu = (event, eventObj) => {
+    event.preventDefault();
+
     setContextMenuState({
       open: true,
       event: eventObj,
-      point: { x: e.clientX, y: e.clientY },
+      point: {
+        x: event.clientX,
+        y: event.clientY,
+      },
     });
   };
 
@@ -75,7 +211,18 @@ export const Schedule = () => {
     const targetDoctorId = isDoctor
       ? currentUser?.id
       : Number(selectedDoctorId);
+
     const patientId = Number(updatedEvent.patient_id || updatedEvent.text);
+
+    if (!targetDoctorId) {
+      alert("Не выбран врач.");
+      return;
+    }
+
+    if (!patientId) {
+      alert("Не удалось определить пациента.");
+      return;
+    }
 
     const payload = {
       doctor_id: Number(targetDoctorId),
@@ -92,10 +239,14 @@ export const Schedule = () => {
         const res = await api.post("/schedule/book/", payload);
 
         setEvents((prev) =>
-          prev.map((ev) =>
-            ev.id === updatedEvent.id
-              ? { ...updatedEvent, doctorId: targetDoctorId }
-              : ev,
+          prev.map((event) =>
+            event.id === updatedEvent.id
+              ? {
+                  ...updatedEvent,
+                  id: res.data?.log_id || updatedEvent.id,
+                  doctorId: Number(targetDoctorId),
+                }
+              : event,
           ),
         );
       } else {
@@ -105,8 +256,8 @@ export const Schedule = () => {
           ...prev,
           {
             ...updatedEvent,
-            id: res.data.log_id || Date.now(),
-            doctorId: targetDoctorId,
+            id: res.data?.log_id || Date.now(),
+            doctorId: Number(targetDoctorId),
           },
         ]);
       }
@@ -114,80 +265,253 @@ export const Schedule = () => {
       const errorMessage =
         err.response?.data?.error ||
         err.response?.data?.detail ||
-        JSON.stringify(err.response?.data) ||
-        "Ошибка при сохранении записи";
+        (err.response?.data ? JSON.stringify(err.response.data) : null) ||
+        "Ошибка при сохранении записи.";
 
       alert(`Не удалось сохранить запись: ${errorMessage}`);
     } finally {
-      setEditorState({ open: false, event: null });
+      setEditorState({
+        open: false,
+        event: null,
+      });
     }
   };
 
+  const closeEditor = () => {
+    setEditorState({
+      open: false,
+      event: null,
+    });
+  };
+
+  const closeContextMenu = () => {
+    setContextMenuState({
+      open: false,
+      event: null,
+      point: null,
+    });
+  };
+
+  const editFromContextMenu = () => {
+    if (!contextMenuState.event) return;
+
+    setEditorState({
+      open: true,
+      event: contextMenuState.event,
+    });
+
+    closeContextMenu();
+  };
+
   return (
-    <div className="schedule__container" style={{ padding: "20px" }}>
-      {isAdmin && (
-        <div style={{ marginBottom: "15px" }}>
-          <label style={{ fontWeight: "bold", marginRight: "10px" }}>
-            Выберите врача:
-          </label>
-          <select
-            value={selectedDoctorId}
-            onChange={(e) => setSelectedDoctorId(e.target.value)}
-            style={{ padding: "6px 12px", borderRadius: "4px" }}
+    <div className="schedule__container">
+      <aside className="schedule__sidebar">
+        <div className="schedule__sidebar-header">
+          <div>
+            <div className="schedule__sidebar-label">РАСПИСАНИЕ</div>
+
+            <div className="schedule__sidebar-title">Приемы</div>
+          </div>
+
+          <button
+            type="button"
+            className="schedule__sidebar-add"
+            onClick={() => {
+              const now = new Date();
+
+              setEditorState({
+                open: true,
+                event: {
+                  start: now,
+                  end: new Date(now.getTime() + 15 * 60 * 1000),
+                  text: "",
+                },
+              });
+            }}
+            aria-label="Добавить запись"
           >
-            {doctors.map((doc) => (
-              <option key={doc.id} value={doc.id}>
-                {doc.doctor_name || `Д-р ${doc.name}`}
-              </option>
-            ))}
-          </select>
+            +
+          </button>
         </div>
-      )}
 
-      {isDoctor && (
-        <h3 style={{ marginBottom: "15px" }}>Мое расписание приемов</h3>
-      )}
+        <div className="schedule__mini-calendar">
+          <div className="schedule__mini-header">
+            <button type="button" className="schedule__mini-arrow">
+              ‹
+            </button>
 
-      <div style={{ height: "calc(100vh - 200px)" }}>
-        <Calendar
-          events={visibleEvents}
-          mode="week"
-          locale={ruLocale}
-          onEventClick={(ev) => setEditorState({ open: true, event: ev })}
-          onEventContextMenu={handleContextMenu}
-          onCellClick={(date) => {
-            const newEvent = {
-              start: date,
-              end: new Date(date.getTime() + 15 * 60000),
-              text: "",
-            };
-            setEditorState({ open: true, event: newEvent });
-          }}
-        />
-      </div>
+            <span>
+              {currentMonth} {currentYear}
+            </span>
+
+            <button type="button" className="schedule__mini-arrow">
+              ›
+            </button>
+          </div>
+
+          <div className="schedule__weekdays">
+            {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
+              <span key={day}>{day}</span>
+            ))}
+          </div>
+
+          <div className="schedule__days">
+            {miniCalendarDays.map((item, index) => (
+              <button
+                type="button"
+                key={`${item.day}-${index}`}
+                className={[
+                  "schedule__day",
+                  item.outside ? "is-outside" : "",
+                  item.today ? "is-today" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {item.day}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button type="button" className="schedule__today-button">
+          Сегодня, {today.getDate()}{" "}
+          {today.toLocaleDateString("ru-RU", {
+            month: "short",
+          })}
+        </button>
+
+        <div className="schedule__sidebar-section">
+          <div className="schedule__section-label">Врач</div>
+
+          {isDoctor ? (
+            <div className="schedule__doctor-card">
+              <div className="schedule__doctor-avatar">
+                {selectedDoctorName.charAt(0).toUpperCase()}
+              </div>
+
+              <div className="schedule__doctor-info">
+                <div className="schedule__doctor-name">
+                  {currentUser?.name ||
+                    currentUser?.doctor_name ||
+                    "Мой кабинет"}
+                </div>
+
+                <div className="schedule__doctor-role">Личный график</div>
+              </div>
+            </div>
+          ) : (
+            <select
+              className="schedule__doctor-select"
+              value={selectedDoctorId}
+              onChange={(event) => setSelectedDoctorId(event.target.value)}
+            >
+              {doctors.length === 0 ? (
+                <option value="">Врачи не найдены</option>
+              ) : (
+                doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.doctor_name || doctor.name || `Д-р ${doctor.id}`}
+                  </option>
+                ))
+              )}
+            </select>
+          )}
+        </div>
+
+        {/* Quick filter */}
+
+        <div className="schedule__sidebar-section">
+          <div className="schedule__section-label">Отображение</div>
+
+          <button type="button" className="schedule__filter-button is-active">
+            <span className="schedule__filter-dot" />
+            Все записи
+          </button>
+
+          <button type="button" className="schedule__filter-button">
+            <span className="schedule__filter-dot is-free" />
+            Свободные окна
+          </button>
+        </div>
+
+        {/* Statistics */}
+
+        <div className="schedule__stats">
+          <div className="schedule__stat">
+            <span className="schedule__stat-value">{bookedCount}</span>
+
+            <span className="schedule__stat-label">Записей сегодня</span>
+          </div>
+
+          <div className="schedule__stat">
+            <span className="schedule__stat-value">{freeCount}</span>
+
+            <span className="schedule__stat-label">Свободных окон</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* =====================================================
+          MAIN CALENDAR
+          ===================================================== */}
+
+      <main className="schedule__main">
+        <div className="schedule__main-header">
+          <div className="schedule__main-title">
+            <div className="schedule__main-eyebrow">ГРАФИК ПРИЕМА</div>
+
+            <h1>{isDoctor ? "Мое расписание" : selectedDoctorName}</h1>
+          </div>
+
+          <div className="schedule__main-actions">
+            <button type="button" className="schedule__action-button">
+              Сегодня
+            </button>
+
+            <button type="button" className="schedule__action-button">
+              Неделя
+            </button>
+          </div>
+        </div>
+
+        <div className="schedule__calendar-wrapper">
+          <Calendar
+            events={visibleEvents}
+            mode="week"
+            locale={ruLocale}
+            onEventClick={handleEventClick}
+            onEventContextMenu={handleContextMenu}
+            onCellClick={handleCellClick}
+          />
+        </div>
+      </main>
+
+      {/* =====================================================
+          EDITOR
+          ===================================================== */}
 
       {editorState.open && (
         <Editor
           event={editorState.event}
           onSave={handleSaveEvent}
-          onClose={() => setEditorState({ open: false, event: null })}
+          onClose={closeEditor}
         />
       )}
+
+      {/* =====================================================
+          CONTEXT MENU
+          ===================================================== */}
 
       {contextMenuState.open && (
         <ContextMenu
           point={contextMenuState.point}
-          onClose={() =>
-            setContextMenuState({ open: false, event: null, point: null })
-          }
+          onClose={closeContextMenu}
           items={[
             {
               id: "edit",
               text: ruLocale.contextMenu.edit,
-              action: () => {
-                setEditorState({ open: true, event: contextMenuState.event });
-                setContextMenuState({ open: false, event: null, point: null });
-              },
+              action: editFromContextMenu,
             },
           ]}
         />
@@ -195,4 +519,5 @@ export const Schedule = () => {
     </div>
   );
 };
+
 export default Schedule;

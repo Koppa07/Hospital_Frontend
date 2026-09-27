@@ -25,7 +25,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const res = await api.get("/patients/");
+        const res = await api.get("/patients/list/");
         setPatients(res.data);
       } catch (err) {
         console.error("Ошибка при загрузке пациентов:", err);
@@ -138,12 +138,12 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
               required
               value={doctorId}
               onChange={(e) => setDoctorId(e.target.value)}
-              className="form__input"
+              className="my__input"
             >
               <option value="">-- Выберите врача --</option>
               {doctors.map((doc) => (
                 <option key={doc.id} value={doc.id}>
-                  {doc.full_name || doc.name || `Врач #${doc.id}`}
+                  {doc.doctor_name || doc.name || `Врач #${doc.doctor_id}`}
                 </option>
               ))}
             </select>
@@ -168,13 +168,13 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
                     setIsDropdownOpen(true);
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
-                  className="form__input"
+                  className="my__input"
                 />
                 {selectedPatient && (
                   <button
                     type="button"
                     onClick={handleClearPatient}
-                    className="btn btn--secondary"
+                    className="btn--second"
                   >
                     ✕
                   </button>
@@ -192,7 +192,8 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
                           onClick={() => handleSelectPatient(patient)}
                           className="autocomplete__item"
                         >
-                          <strong>{fullName}</strong> (Карта #{patient.id})
+                          <strong>{fullName}</strong> (Карта #
+                          {patient.card_number})
                         </li>
                       );
                     })
@@ -213,7 +214,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="form__input"
+              className="my__input"
             />
           </div>
 
@@ -227,7 +228,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
                   required
                   value={selectedSlot}
                   onChange={(e) => setSelectedSlot(e.target.value)}
-                  className="form__input"
+                  className="my__input"
                 >
                   <option value="">-- Выберите время --</option>
                   {availableSlots.map((slot) => {
@@ -259,14 +260,14 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
             <button
               type="button"
               onClick={onClose}
-              className="btn btn--secondary"
+              className="btn--second"
               disabled={isSubmitting}
             >
               Отмена
             </button>
             <button
               type="submit"
-              className="btn btn--primary"
+              className="btn--prime"
               disabled={isSubmitting || !selectedSlot || !selectedPatient}
             >
               {isSubmitting

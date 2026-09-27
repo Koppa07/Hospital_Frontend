@@ -38,7 +38,9 @@ function PatientProfile({ existingProfile, onSuccess, onClose }) {
           : serverErrors.detail || "Проверьте корректность введенных данных.";
         setError(errorMessage);
       } else {
-        setError("Не удалось сохранить данные профиля.");
+        setError(
+          "Не удалось сохранить данные профиля. Проверьте введенные поля.",
+        );
       }
     } finally {
       setLoading(false);
@@ -102,18 +104,14 @@ function PatientProfile({ existingProfile, onSuccess, onClose }) {
             {onClose && (
               <button
                 type="button"
-                className="btn btn--secondary"
+                className="btn--second"
                 onClick={onClose}
                 disabled={loading}
               >
                 Отмена
               </button>
             )}
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={loading}
-            >
+            <button type="submit" className="btn--prime" disabled={loading}>
               {loading ? "Сохранение..." : "Сохранить профиль"}
             </button>
           </div>

@@ -49,24 +49,31 @@ function Form({ route, method }) {
 
   return (
     <form onSubmit={handleSubmit} className="form__container">
-      <h1>{name}</h1>
-      <input
-        className="form__input"
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Имя пользователя"
-      />
-      <input
-        className="form__input"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Пароль"
-      />
+      <div className="form-group">
+        <h1>{name}</h1>
+        <input
+          className="my__input"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Имя пользователя"
+          required
+        />
+      </div>
+      <div className="form-group">
+        <input
+          className="my__input"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Пароль"
+          required
+        />
+      </div>
+
       {method === "signup" && (
         <select
-          className="form__input"
+          className="my__input"
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
@@ -76,7 +83,7 @@ function Form({ route, method }) {
           <option value="ADMIN">Администратор</option>
         </select>
       )}
-      <button className="btn--primary" type="submit">
+      <button className="btn--prime" type="submit">
         {btn_name}
       </button>
     </form>

@@ -79,9 +79,12 @@ function ChangePassword({ isOpen, onClose }) {
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Смена пароля</h3>
+          <p>Требования к паролю:</p>
+          <p>1. Длина пароля от 4 символов</p>
+          <p>2. Пароль не должен совпадать с предыдущим</p>
         </div>
 
-        {error && <div className="modal-alert modal-alert--error">{error}</div>}
+        {error && <div className="modal__error error__password">{error}</div>}
         {successMessage && (
           <div className="modal-alert modal-alert--success">
             {successMessage}
@@ -131,17 +134,13 @@ function ChangePassword({ isOpen, onClose }) {
           <div className="modal-actions">
             <button
               type="button"
-              className="btn btn--secondary"
+              className="btn--second"
               onClick={handleClose}
               disabled={loading}
             >
               Отмена
             </button>
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={loading}
-            >
+            <button type="submit" className="btn--prime" disabled={loading}>
               {loading ? "Сохранение..." : "Изменить пароль"}
             </button>
           </div>

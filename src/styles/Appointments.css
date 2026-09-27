@@ -1,0 +1,60 @@
+.appointments__container {
+  width: 100%;
+  max-width: 1200px;
+
+  padding: 24px;
+  margin: 0 auto;
+
+  box-sizing: border-box;
+}
+.appointments__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 24px;
+}
+.appointments__header h2 {
+  margin: 0;
+
+  font-size: 1.5rem;
+  font-weight: 600;
+
+  color: var(--color-dark-brown);
+}
+.appointments__filters {
+  width: 100%;
+
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+
+  margin-bottom: 24px;
+}
+.appointments__filters > * {
+  flex: 1;
+  min-width: 0;
+}
+.appointments__filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  min-width: 0;
+}
+.appointments__error {
+  background-color: #ffebe9;
+  border: 1px solid #ffc1ce;
+  color: #cf222e;
+
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+
+  margin-bottom: 20px;
+}
+.appointments__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+
+  gap: 20px;
+}

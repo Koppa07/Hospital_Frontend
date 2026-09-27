@@ -85,17 +85,12 @@ function Dep() {
     setIsSubmitting(true);
 
     try {
-      if (editingDepId) {
-        const res = await api.put(`/departments/${editingDepId}/`, formData);
-        setDeps((prev) =>
-          prev.map((item) =>
-            (item.dep_id || item.id) === editingDepId ? res.data : item,
-          ),
-        );
+      if (editingDepId !== null) {
+        await api.put(`/departments/${editingDepId}/`, formData);
       } else {
-        const res = await api.post("/departments/", formData);
-        setDeps((prev) => [...prev, res.data]);
+        await api.post("/departments/", formData);
       }
+      await fetchDeps();
       handleCloseModal();
     } catch (err) {
       const errorData = err.response?.data;
@@ -123,7 +118,7 @@ function Dep() {
     <div className="dep__container">
       <div className="dep__header">
         <h2>Список отделений</h2>
-        <button onClick={handleOpenAddModal} className="btn btn--primary">
+        <button onClick={handleOpenAddModal} className="btn--prime">
           + Добавить отделение
         </button>
       </div>
@@ -135,7 +130,7 @@ function Dep() {
           deps.map((dep) => (
             <div key={dep.dep_id || dep.id} className="dep__card">
               <div className="dep__card-body">
-                <h3>{dep.dep_title || dep.title}</h3>
+                <h3>{dep.dep_title || dep}</h3>
                 {dep.name_of_manager && (
                   <p>
                     <strong>Фамилия заведующего:</strong> {dep.name_of_manager}
@@ -145,13 +140,13 @@ function Dep() {
               <div className="dep__card-actions">
                 <button
                   onClick={() => handleOpenEditModal(dep)}
-                  className="btn btn--edit"
+                  className="btn--second"
                 >
                   Редактировать
                 </button>
                 <button
                   onClick={() => handleDelete(dep)}
-                  className="dep__delete-btn"
+                  className="btn--delete"
                 >
                   Удалить
                 </button>
@@ -184,7 +179,7 @@ function Dep() {
                   onChange={handleInputChange}
                   required
                   placeholder="Введите название"
-                  className="form__input"
+                  className="my__input"
                 />
               </div>
 
@@ -196,7 +191,8 @@ function Dep() {
                   value={formData.name_of_manager}
                   onChange={handleInputChange}
                   placeholder="Введите фамилию"
-                  className="form__input"
+                  className="my__input"
+                  required
                 />
               </div>
 
@@ -205,14 +201,14 @@ function Dep() {
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="btn btn--secondary"
+                  className="btn--second"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn btn--primary"
+                  className="btn--prime"
                 >
                   {isSubmitting ? "Сохранение..." : "Сохранить"}
                 </button>

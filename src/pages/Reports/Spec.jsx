@@ -44,7 +44,7 @@ function Spec() {
   };
 
   const handleOpenEditModal = (spec) => {
-    const specId = spec.id || spec.spec_id;
+    const specId = spec.spec_id || spec.id;
     setEditingSpecId(specId);
     setFormData({
       spec_title: spec.spec_title || spec.title || "",
@@ -84,19 +84,11 @@ function Spec() {
 
     try {
       if (editingSpecId) {
-        const res = await api.put(
-          `/specializations/${editingSpecId}/`,
-          formData,
-        );
-        setSpecs((prev) =>
-          prev.map((s) =>
-            (s.id || s.spec_id) === editingSpecId ? res.data : s,
-          ),
-        );
+        await api.patch(`/specializations/${editingSpecId}/`, formData);
       } else {
-        const res = await api.post("/specializations/", formData);
-        setSpecs((prev) => [...prev, res.data]);
+        await api.post("/specializations/", formData);
       }
+      fetchSpecs();
       handleCloseModal();
     } catch (err) {
       const errorData = err.response?.data;
@@ -124,7 +116,7 @@ function Spec() {
     <div className="spec__container">
       <div className="spec__header">
         <h2>Список специализаций</h2>
-        <button onClick={handleOpenAddModal} className="btn btn--primary">
+        <button onClick={handleOpenAddModal} className="btn--prime">
           + Добавить специализацию
         </button>
       </div>
@@ -134,20 +126,24 @@ function Spec() {
       <div className="specs__grid">
         {specs.length > 0 ? (
           specs.map((spec) => (
-            <div key={spec.id || spec.spec_id} className="spec__card">
-              <h3>{spec.spec_title || spec.title}</h3>
-              <button
-                onClick={() => handleOpenEditModal(spec)}
-                className="spec__edit-btn"
-              >
-                Редактировать
-              </button>
-              <button
-                onClick={() => handleDelete(spec)}
-                className="spec__delete-btn"
-              >
-                Удалить
-              </button>
+            <div key={spec.spec_id} className="spec__card">
+              <div className="spec__card-body">
+                <h3>{spec.spec_title}</h3>
+              </div>
+              <div className="spec__card-actions">
+                <button
+                  onClick={() => handleOpenEditModal(spec)}
+                  className="btn--second"
+                >
+                  Редактировать
+                </button>
+                <button
+                  onClick={() => handleDelete(spec)}
+                  className="btn--delete"
+                >
+                  Удалить
+                </button>
+              </div>
             </div>
           ))
         ) : (
@@ -178,7 +174,7 @@ function Spec() {
                   onChange={handleInputChange}
                   required
                   placeholder="Введите название"
-                  className="form__input"
+                  className="my__input"
                 />
               </div>
 
@@ -187,14 +183,14 @@ function Spec() {
                   type="button"
                   onClick={handleCloseModal}
                   disabled={isSubmitting}
-                  className="btn btn--secondary"
+                  className="btn--second"
                 >
                   Отмена
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn btn--primary"
+                  className="btn--prime"
                 >
                   {isSubmitting ? "Сохранение..." : "Сохранить"}
                 </button>

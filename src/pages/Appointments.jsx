@@ -29,7 +29,7 @@ function Appointments() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const doctorsRes = await api.get("/doctors/");
+        const doctorsRes = await api.get("/doctors/list/");
         setDoctors(doctorsRes.data);
 
         if (isDoctor) {
@@ -88,10 +88,7 @@ function Appointments() {
       <div className="appointments__header">
         <h2>Записи на прием</h2>
         {!isDoctor && (
-          <button
-            onClick={() => setModalType("book")}
-            className="btn btn--primary"
-          >
+          <button onClick={() => setModalType("book")} className="btn--prime">
             + Добавить запись
           </button>
         )}
@@ -105,10 +102,14 @@ function Appointments() {
             value={doctorId}
             onChange={(e) => setDoctorId(e.target.value)}
             disabled={isDoctor}
+            className="my__input"
           >
             {!isDoctor && <option value="">-- Выберите врача --</option>}
             {doctors.map((doc) => (
-              <option key={doc.id} value={doc.id}>
+              <option
+                key={doc.id || doc.doctor_id}
+                value={doc.id || doc.doctor_id}
+              >
                 {doc.doctor_name || doc.name || `Врач #${doc.id}`}
               </option>
             ))}
@@ -122,6 +123,7 @@ function Appointments() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            className="my__input"
           />
         </div>
       </div>
