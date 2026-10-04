@@ -107,3 +107,35 @@
   color: var(--color-text-muted);
   padding: 40px 0;
 }
+.credentials__box {
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.credentials__box h3 {
+  margin: 0 0 20px;
+  font-size: 1.25rem;
+  color: var(--color-dark-brown);
+}
+
+.credentials__box p {
+  margin: 10px 0;
+  padding: 10px 14px;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-main);
+  font-size: 0.95rem;
+}
+
+.credentials__box p strong {
+  color: var(--color-primary-dark);
+}
+
+.credentials__box .btn--prime {
+  margin-top: 16px;
+}

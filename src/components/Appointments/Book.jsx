@@ -79,7 +79,10 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
 
   const handleSelectPatient = (patient) => {
     const fullName = patient.patient_name || patient.name;
-    setSelectedPatient({ id: patient.id, name: fullName });
+    setSelectedPatient({
+      id: patient.patient_id || patient.card_number,
+      name: fullName,
+    });
     setSearchTerm(fullName);
     setIsDropdownOpen(false);
   };
@@ -108,15 +111,20 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
       await api.post("/schedule/book/", {
         doctor_id: Number(doctorId),
         patient_id: Number(selectedPatient.id),
-        appointment_date: selectedSlot,
+        slot_id: Number(selectedSlot),
       });
 
       onSuccess();
       onClose();
     } catch (err) {
+      console.error("BOOK ERROR:", err);
+      console.error("STATUS:", err.response?.status);
+      console.error("DATA:", err.response?.data);
+
       setError(
         err.response?.data?.error ||
           err.response?.data?.detail ||
+          JSON.stringify(err.response?.data) ||
           "Не удалось записать пациента",
       );
     } finally {
@@ -142,7 +150,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
             >
               <option value="">-- Выберите врача --</option>
               {doctors.map((doc) => (
-                <option key={doc.id} value={doc.id}>
+                <option key={doc.doctor_id} value={doc.doctor_id}>
                   {doc.doctor_name || doc.name || `Врач #${doc.doctor_id}`}
                 </option>
               ))}
@@ -239,10 +247,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
                       minute: "2-digit",
                     });
                     return (
-                      <option
-                        key={slot.id || slot.start_datetime}
-                        value={slot.start_datetime}
-                      >
+                      <option key={slot.slot_id} value={slot.slot_id}>
                         {timeStr}
                       </option>
                     );

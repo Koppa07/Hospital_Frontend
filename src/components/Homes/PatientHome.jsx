@@ -146,11 +146,10 @@ function PatientHome() {
       </div>
 
       <section className="home__section">
-        {/*TODO ограничить число записей до двух */}
         <h2>Мои текущие записи</h2>
         {upcomingAppointments.length > 0 ? (
           <div className="home__grid">
-            {upcomingAppointments.map((app) => (
+            {upcomingAppointments.slice(0, 2).map((app) => (
               <div key={app.id || app.log_id} className="appointment-card">
                 <div className="appointment-card__header">
                   <span className="appointment-card__date">
@@ -213,10 +212,9 @@ function PatientHome() {
 
       <section className="home__section">
         <h2>Медицинская карта и история визитов</h2>
-        {/*TODO Сделать ссылку на историю болезни, ограничить число записей до двух */}
         {medicalHistory.length > 0 ? (
           <div className="history-list">
-            {medicalHistory.map((item) => (
+            {medicalHistory.slice(0, 2).map((item) => (
               <div key={item.id || item.log_id} className="history-item">
                 <div className="history-item__header">
                   <span className="history-item__date">

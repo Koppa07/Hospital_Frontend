@@ -85,11 +85,6 @@ function ChangePassword({ isOpen, onClose }) {
         </div>
 
         {error && <div className="modal__error error__password">{error}</div>}
-        {successMessage && (
-          <div className="modal-alert modal-alert--success">
-            {successMessage}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
@@ -101,7 +96,7 @@ function ChangePassword({ isOpen, onClose }) {
               onChange={handleChange}
               required
               placeholder="Введите старый пароль"
-              className="form-input"
+              className="my__input"
             />
           </div>
 
@@ -114,7 +109,7 @@ function ChangePassword({ isOpen, onClose }) {
               onChange={handleChange}
               required
               placeholder="Введите новый пароль"
-              className="form-input"
+              className="my__input"
             />
           </div>
 
@@ -127,11 +122,11 @@ function ChangePassword({ isOpen, onClose }) {
               onChange={handleChange}
               required
               placeholder="Повторите новый пароль"
-              className="form-input"
+              className="my__input"
             />
           </div>
 
-          <div className="modal-actions">
+          <div className="modal__actions">
             <button
               type="button"
               className="btn--second"

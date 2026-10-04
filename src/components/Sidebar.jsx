@@ -73,7 +73,7 @@ function Sidebar({ onClose }) {
                   Отделения
                 </SidebarLink>
                 <SidebarLink to="/specializations" onClick={handleLinkClick}>
-                  Специальности
+                  Специализации
                 </SidebarLink>
                 <SidebarLink to="/rooms" onClick={handleLinkClick}>
                   Кабинеты

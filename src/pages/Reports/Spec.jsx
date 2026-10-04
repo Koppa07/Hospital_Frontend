@@ -1,8 +1,13 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Reports/spec.css";
+import "../../styles/Reports/spec.css";
+import { USER_INFO } from "../../constants";
 
 function Spec() {
+  const savedUser = localStorage.getItem(USER_INFO);
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+  const canWrite = currentUser?.role === "ADMIN";
+
   const [specs, setSpecs] = useState([]);
   const [error, setError] = useState(null);
 
@@ -116,9 +121,11 @@ function Spec() {
     <div className="spec__container">
       <div className="spec__header">
         <h2>Список специализаций</h2>
-        <button onClick={handleOpenAddModal} className="btn--prime">
-          + Добавить специализацию
-        </button>
+        {canWrite && (
+          <button onClick={handleOpenAddModal} className="btn--prime">
+            + Добавить специализацию
+          </button>
+        )}
       </div>
 
       {error && <div className="specs__error">{error}</div>}
@@ -130,20 +137,22 @@ function Spec() {
               <div className="spec__card-body">
                 <h3>{spec.spec_title}</h3>
               </div>
-              <div className="spec__card-actions">
-                <button
-                  onClick={() => handleOpenEditModal(spec)}
-                  className="btn--second"
-                >
-                  Редактировать
-                </button>
-                <button
-                  onClick={() => handleDelete(spec)}
-                  className="btn--delete"
-                >
-                  Удалить
-                </button>
-              </div>
+              {canWrite && (
+                <div className="spec__card-actions">
+                  <button
+                    onClick={() => handleOpenEditModal(spec)}
+                    className="btn--second"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => handleDelete(spec)}
+                    className="btn--delete"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              )}
             </div>
           ))
         ) : (

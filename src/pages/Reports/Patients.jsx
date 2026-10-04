@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Patients.css";
+import "../../styles/Patients.css";
 import api from "../../api";
+import { USER_INFO } from "../../constants";
 
 function Patients() {
+  const savedUser = localStorage.getItem(USER_INFO);
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+  const canWrite = currentUser?.role === "ADMIN";
+
   const [patients, setPatients] = useState([]);
   const [filters, setFilters] = useState({
     card_number: "",
@@ -18,6 +23,7 @@ function Patients() {
     address: "",
     insurance: "",
   });
+  const [credentials, setCredentials] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -87,6 +93,7 @@ function Patients() {
     setIsModalOpen(false);
     setSubmitError(null);
     setEditingPatId(null);
+    setCredentials(null);
   };
 
   const handleDelete = async (pat) => {
@@ -121,11 +128,15 @@ function Patients() {
     try {
       if (editingPatId) {
         await api.put(`/patients/${editingPatId}/`, formData);
+        await fetchPatients();
+        handleCloseModal();
       } else {
-        await api.post("/patients/register/", formData);
+        const res = await api.post("/patients/register/", formData);
+
+        setCredentials(res.data.credentials);
+
+        await fetchPatients();
       }
-      await fetchPatients();
-      handleCloseModal();
     } catch (err) {
       const errorData = err.response?.data;
       if (typeof errorData === "object" && errorData !== null) {
@@ -152,9 +163,11 @@ function Patients() {
     <div className="pat__container">
       <div className="pat__header">
         <h2>Список пациентов</h2>
-        <button onClick={handleOpenAddModal} className="btn--prime">
-          + Добавить пациента
-        </button>
+        {canWrite && (
+          <button onClick={handleOpenAddModal} className="btn--prime">
+            + Добавить пациента
+          </button>
+        )}
       </div>
 
       <div className="patients__filters">
@@ -237,20 +250,22 @@ function Patients() {
                   <strong>Полис ОМС:</strong> {pat.insurance || "Не указан"}
                 </p>
               </div>
-              <div className="pat__card-actions">
-                <button
-                  onClick={() => handleOpenEditModal(pat)}
-                  className="btn--second"
-                >
-                  Редактировать
-                </button>
-                <button
-                  onClick={() => handleDelete(pat)}
-                  className="btn--delete"
-                >
-                  Удалить
-                </button>
-              </div>
+              {canWrite && (
+                <div className="pat__card-actions">
+                  <button
+                    onClick={() => handleOpenEditModal(pat)}
+                    className="btn--second"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => handleDelete(pat)}
+                    className="btn--delete"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              )}
             </div>
           ))
         ) : (
@@ -338,6 +353,27 @@ function Patients() {
               </div>
             </form>
           </div>
+          {credentials && (
+            <div className="credentials__box">
+              <h3>Данные для входа пациента</h3>
+
+              <p>
+                <strong>Логин:</strong> {credentials.username}
+              </p>
+
+              <p>
+                <strong>Пароль:</strong> {credentials.password}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setCredentials(null)}
+                className="btn--prime"
+              >
+                Закрыть
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

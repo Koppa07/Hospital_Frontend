@@ -1,8 +1,16 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Reports/disease.css";
+import "../../styles/Reports/disease.css";
+import NotFound from "../NotFound";
+import { USER_INFO } from "../../constants";
 
 function Disease() {
+  const savedUser = localStorage.getItem(USER_INFO);
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+  const isRegistrar = currentUser?.role === "REGISTRAR";
+
+  if (isRegistrar) <NotFound />;
+
   const [diseases, setDiseases] = useState([]);
   const [error, setError] = useState(null);
 

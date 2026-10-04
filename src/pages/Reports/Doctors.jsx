@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Doctors.css";
+import "../../styles/Doctors.css";
 import api from "../../api";
+import { USER_INFO } from "../../constants";
 
 function Doctors() {
+  const savedUser = localStorage.getItem(USER_INFO);
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+  const canWrite = currentUser?.role === "ADMIN";
+
   const [doctors, setDoctors] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [specialties, setSpecialties] = useState([]);
@@ -170,9 +175,11 @@ function Doctors() {
     <div className="doc__container">
       <div className="doc__header">
         <h2>Список врачей</h2>
-        <button onClick={handleOpenAddModal} className="btn--prime">
-          + Добавить врача
-        </button>
+        {canWrite && (
+          <button onClick={handleOpenAddModal} className="btn--prime">
+            + Добавить врача
+          </button>
+        )}
       </div>
 
       <div className="docs__filters">
@@ -227,6 +234,9 @@ function Doctors() {
               <div className="doc__card-body">
                 <h3>{doc.doctor_name || doc.user?.username}</h3>
                 <p>
+                  <strong>ID: </strong> {doc.doctor_id || "Не указан"}
+                </p>
+                <p>
                   <strong>Специализация:</strong>{" "}
                   {doc.spec_title || "Не указана"}
                 </p>
@@ -239,20 +249,22 @@ function Doctors() {
                   </p>
                 )}
               </div>
-              <div className="doc__card-actions">
-                <button
-                  onClick={() => handleOpenEditModal(doc)}
-                  className="btn--second"
-                >
-                  Редактировать
-                </button>
-                <button
-                  onClick={() => handleDelete(doc)}
-                  className="btn--delete"
-                >
-                  Удалить
-                </button>
-              </div>
+              {canWrite && (
+                <div className="doc__card-actions">
+                  <button
+                    onClick={() => handleOpenEditModal(doc)}
+                    className="btn--second"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => handleDelete(doc)}
+                    className="btn--delete"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              )}
             </div>
           ))
         ) : (

@@ -1,8 +1,13 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Reports/dep.css";
+import "../../styles/Reports/dep.css";
+import { USER_INFO } from "../../constants";
 
 function Dep() {
+  const savedUser = localStorage.getItem(USER_INFO);
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+  const canWrite = currentUser?.role === "ADMIN";
+
   const [deps, setDeps] = useState([]);
   const [error, setError] = useState(null);
 
@@ -118,9 +123,11 @@ function Dep() {
     <div className="dep__container">
       <div className="dep__header">
         <h2>Список отделений</h2>
-        <button onClick={handleOpenAddModal} className="btn--prime">
-          + Добавить отделение
-        </button>
+        {canWrite && (
+          <button onClick={handleOpenAddModal} className="btn--prime">
+            + Добавить отделение
+          </button>
+        )}
       </div>
 
       {error && <div className="deps__error">{error}</div>}
@@ -137,20 +144,22 @@ function Dep() {
                   </p>
                 )}
               </div>
-              <div className="dep__card-actions">
-                <button
-                  onClick={() => handleOpenEditModal(dep)}
-                  className="btn--second"
-                >
-                  Редактировать
-                </button>
-                <button
-                  onClick={() => handleDelete(dep)}
-                  className="btn--delete"
-                >
-                  Удалить
-                </button>
-              </div>
+              {canWrite && (
+                <div className="dep__card-actions">
+                  <button
+                    onClick={() => handleOpenEditModal(dep)}
+                    className="btn--second"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => handleDelete(dep)}
+                    className="btn--delete"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              )}
             </div>
           ))
         ) : (

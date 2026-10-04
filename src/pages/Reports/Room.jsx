@@ -1,6 +1,7 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Reports/rooms.css";
+import "../../styles/Reports/rooms.css";
+import { USER_INFO } from "../../constants";
 
 const AVAILABLE_EQUIPMENT = [
   "УЗИ аппарат",
@@ -17,6 +18,10 @@ const AVAILABLE_EQUIPMENT = [
 ];
 
 function Room() {
+  const savedUser = localStorage.getItem(USER_INFO);
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+  const canWrite = currentUser?.role === "ADMIN";
+
   const [selectedEquipmentItem, setSelectedEquipmentItem] = useState("");
   const [rooms, setRooms] = useState([]);
   const [error, setError] = useState(null);
@@ -179,9 +184,11 @@ function Room() {
     <div className="room__container">
       <div className="room__header">
         <h2>Список кабинетов</h2>
-        <button onClick={handleOpenAddModal} className="btn--prime">
-          + Добавить кабинет
-        </button>
+        {canWrite && (
+          <button onClick={handleOpenAddModal} className="btn--prime">
+            + Добавить кабинет
+          </button>
+        )}
       </div>
 
       {error && <div className="rooms__error">{error}</div>}
@@ -197,20 +204,22 @@ function Room() {
                   {renderEquipmentList(room.equipment)}
                 </p>
               </div>
-              <div className="room__card-actions">
-                <button
-                  onClick={() => handleOpenEditModal(room)}
-                  className="btn--second"
-                >
-                  Редактировать
-                </button>
-                <button
-                  onClick={() => handleDelete(room)}
-                  className="btn--delete"
-                >
-                  Удалить
-                </button>
-              </div>
+              {canWrite && (
+                <div className="room__card-actions">
+                  <button
+                    onClick={() => handleOpenEditModal(room)}
+                    className="btn--second"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => handleDelete(room)}
+                    className="btn--delete"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              )}
             </div>
           ))
         ) : (

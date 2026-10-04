@@ -1,8 +1,16 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Reports/drugs.css";
+import "../../styles/Reports/drugs.css";
+import { USER_INFO } from "../../constants";
 
 function Drug() {
+  const savedUser = localStorage.getItem(USER_INFO);
+  const currentUser = savedUser ? JSON.parse(savedUser) : null;
+  const isRegistrar = currentUser?.role === "REGISTRAR";
+  const canWrite = currentUser?.role === "ADMIN";
+
+  if (isRegistrar) <NotFound />;
+
   const [drugs, setDrugs] = useState([]);
   const [error, setError] = useState(null);
 
@@ -118,9 +126,11 @@ function Drug() {
     <div className="drug__container">
       <div className="drug__header">
         <h2>Список медикаментов</h2>
-        <button onClick={handleOpenAddModal} className="btn--prime">
-          + Добавить медикамент
-        </button>
+        {canWrite && (
+          <button onClick={handleOpenAddModal} className="btn--prime">
+            + Добавить медикамент
+          </button>
+        )}
       </div>
 
       {error && <div className="drugs__error">{error}</div>}
@@ -138,20 +148,22 @@ function Drug() {
                   </p>
                 )}
               </div>
-              <div className="drug__card-actions">
-                <button
-                  onClick={() => handleOpenEditModal(drug)}
-                  className="btn--second"
-                >
-                  Редактировать
-                </button>
-                <button
-                  onClick={() => handleDelete(drug)}
-                  className="btn--delete"
-                >
-                  Удалить
-                </button>
-              </div>
+              {canWrite && (
+                <div className="drug__card-actions">
+                  <button
+                    onClick={() => handleOpenEditModal(drug)}
+                    className="btn--second"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => handleDelete(drug)}
+                    className="btn--delete"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              )}
             </div>
           ))
         ) : (
