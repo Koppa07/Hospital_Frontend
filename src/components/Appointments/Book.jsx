@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../../api";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Appointments/Book.css";
+import "../../styles/Appointments/Book.css";
 
 function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
   const [doctorId, setDoctorId] = useState("");
