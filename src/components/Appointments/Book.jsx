@@ -21,7 +21,13 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
   const dropdownRef = useRef(null);
 
   const isPatient = user?.role === "PATIENT";
-
+  useEffect(() => {
+    if (isPatient && user?.patient_id) {
+      setSelectedPatient({
+        id: user.patient_id,
+      });
+    }
+  }, [isPatient, user]);
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -29,11 +35,11 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
         setPatients(res.data);
       } catch (err) {
         console.error("Ошибка при загрузке пациентов:", err);
-      } finally {
       }
     };
+
     fetchPatients();
-  }, []);
+  }, [isPatient]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -95,10 +101,12 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPatient) {
-      setError("Выберите пациента из списка");
+
+    if (!isPatient && !selectedPatient?.id) {
+      setError("Выберите пациента");
       return;
     }
+
     if (!selectedSlot) {
       setError("Выберите время приёма");
       return;
@@ -108,11 +116,20 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
     setError(null);
 
     try {
-      await api.post("/schedule/book/", {
+      const payload = {
         doctor_id: Number(doctorId),
-        patient_id: Number(selectedPatient.id),
         slot_id: Number(selectedSlot),
-      });
+        patient_id: Number(patientId),
+      };
+      if (!isPatient) {
+        payload.patient_id = Number(selectedPatient.id);
+      }
+
+      console.log("BOOK PAYLOAD:", payload);
+
+      const res = await api.post("/schedule/book/", payload);
+
+      console.log("BOOK RESPONSE:", res.data);
 
       onSuccess();
       onClose();
@@ -196,7 +213,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
                       const fullName = patient.patient_name || patient.name;
                       return (
                         <li
-                          key={patient.id}
+                          key={patient.patient_id}
                           onClick={() => handleSelectPatient(patient)}
                           className="autocomplete__item"
                         >
@@ -273,7 +290,11 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
             <button
               type="submit"
               className="btn--prime"
-              disabled={isSubmitting || !selectedSlot || !selectedPatient}
+              disabled={
+                isSubmitting ||
+                !selectedSlot ||
+                (!isPatient && !selectedPatient)
+              }
             >
               {isSubmitting
                 ? "Запись..."

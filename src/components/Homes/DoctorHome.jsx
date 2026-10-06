@@ -5,7 +5,8 @@ import DoctorProfile from "../DoctorProfile";
 import Cancel from "../Appointments/Cancel";
 import ChangePassword from "../ChangePassword";
 import { Link } from "react-router-dom";
-import "../../styles/Homes/home.css";
+import "../../styles/home.css";
+import AppointmentCard from "../Appointments/AppointmentCard";
 function DoctorHome() {
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
@@ -33,7 +34,7 @@ function DoctorHome() {
   const fetchAppointments = async () => {
     setError(null);
     try {
-      const res = await api.get("/appointments/");
+      const res = await api.get("/appointments/planned/");
       setUpcomingAppointments(res.data);
     } catch (err) {
       console.error("Не удалось загрузить записи:", err);
@@ -61,6 +62,23 @@ function DoctorHome() {
   useEffect(() => {
     fetchProfile();
   }, []);
+  const renderAppointmentCard = (app) => (
+    <AppointmentCard
+      key={app.log_id}
+      app={app}
+      onCancel={
+        app.status !== "CANCELLED" &&
+        app.status !== "COMPLETED" &&
+        app.status !== "NO_SHOW"
+          ? (appointment) => {
+              setSelectedApp(appointment);
+              setModalType("cancel");
+            }
+          : undefined
+      }
+      user={user}
+    />
+  );
   return (
     <div className="home_container">
       <div className="home__welcome">
@@ -96,53 +114,16 @@ function DoctorHome() {
         <h2>Запланированные записи</h2>
         {upcomingAppointments.length > 0 ? (
           <div className="home__grid">
-            {upcomingAppointments.map((app) => (
-              <div key={app.id || app.log_id} className="appointment-card">
-                <div className="appointment-card__header">
-                  <span className="appointment-card__date">
-                    {new Date(
-                      app.appointment_date || app.start_datetime,
-                    ).toLocaleString("ru-RU", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                  <span
-                    className={`status status--${app.status?.toLowerCase()}`}
-                  >
-                    {app.status}
-                  </span>
-                </div>
-                <div className="appointment-card__body">
-                  <p>
-                    <strong>Пациент:</strong>{" "}
-                    {app.patient_name ||
-                      app.patient?.name ||
-                      `Пациент #${app.patient_id || app.patient}`}
-                  </p>
-                </div>
-                {app.status !== "CANCELLED" && app.status !== "COMPLETED" && (
-                  <div className="appointment-card__actions">
-                    <button
-                      className="btn--prime"
-                      onClick={() => {
-                        setSelectedApp(app);
-                        setModalType("cancel");
-                      }}
-                    >
-                      Отменить запись
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+            {upcomingAppointments.slice(0, 2).map(renderAppointmentCard)}
           </div>
         ) : (
-          <p className="home__empty">У вас пока нет активных записей.</p>
+          <p className="home__empty">У вас пока нет запланированных записей.</p>
         )}
+        <div className="home__appointments">
+          <Link to="/appointments/" className="go-to">
+            Все записи
+          </Link>
+        </div>
       </section>
       <div className="home__reports">
         <Link to="/reports" className="go-to">
@@ -152,11 +133,6 @@ function DoctorHome() {
       <div className="home__schedule">
         <Link to="/schedule" className="go-to">
           Расписание
-        </Link>
-      </div>
-      <div className="home__appointments">
-        <Link to="/appointments" className="go-to">
-          Приемы
         </Link>
       </div>
       <section className="home__section">

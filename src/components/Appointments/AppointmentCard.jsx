@@ -1,58 +1,103 @@
-function AppointmentCard({ app, onCancel, onComplete }) {
+import "../../styles/Appointments/AppointmentCard.css";
+
+function AppointmentCard({ app, onCancel, onComplete, user }) {
   const getStatusBadge = (status) => {
     switch (status) {
       case "BOOKED":
-        return <span className="badge badge--booked">Запланировано</span>;
+        return <span className="appointment-card__badge">Запланировано</span>;
+
       case "COMPLETED":
-        return <span className="badge badge--completed">Завершено</span>;
+        return <span className="appointment-card__badge">Завершено</span>;
+
       case "CANCELLED":
-        return <span className="badge badge--cancelled">Отменено</span>;
+        return <span className="appointment-card__badge">Отменено</span>;
+
       case "NO_SHOW":
-        return <span className="badge badge--noshow">Неявка</span>;
+        return <span className="appointment-card__badge">Неявка</span>;
+
       default:
-        return <span className="badge">{status}</span>;
+        return <span className="appointment-card__badge">{status}</span>;
     }
   };
 
+  const isDoctor = user?.role === "DOCTOR";
+  const isPatient = user?.role === "PATIENT";
+  const status = app?.status?.toUpperCase();
+  const appointmentDate = app?.appointment_date || app?.start_datetime;
+
   return (
-    <div className="appointment__card">
-      <div className="appointment__card-header">
-        <h4>{app.title}</h4>
-        {getStatusBadge(app.status)}
+    <article className="appointment-card">
+      <div className="appointment-card__header">
+        <span className="appointment-card__date">
+          {appointmentDate
+            ? new Date(appointmentDate).toLocaleString("ru-RU", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Дата не указана"}
+        </span>
+
+        <div
+          className={`appointment-card__status appointment-card__status--${
+            status?.toLowerCase() || "default"
+          }`}
+        >
+          {getStatusBadge(status || "Неизвестно")}
+        </div>
       </div>
 
-      <div className="appointment__card-body">
-        <p>
-          <strong>Время:</strong>{" "}
-          {new Date(app.start).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}{" "}
-          -{" "}
-          {new Date(app.end).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
-        <p>
-          <strong>Дата:</strong> {new Date(app.start).toLocaleDateString()}
-        </p>
-        <p>
-          <strong>Карта пациента:</strong> #{app.patient_id}
-        </p>
+      <div className="appointment-card__body">
+        {!isDoctor && (
+          <>
+            <p>
+              <strong>Врач:</strong>{" "}
+              {app.doctor_name || `Врач #${app.doctor_id}`}
+            </p>
+
+            <p>
+              <strong>Специализация:</strong> {app.specialization || "Терапевт"}
+            </p>
+
+            <p>
+              <strong>Кабинет:</strong> {app.room_number || "—"}
+            </p>
+          </>
+        )}
+
+        {isDoctor && (
+          <p>
+            <strong>Пациент:</strong>{" "}
+            {app.patient_name || app.patient?.name || "—"}
+          </p>
+        )}
       </div>
 
-      {app.status === "BOOKED" && (
-        <div className="appointment__card-actions">
-          <button onClick={() => onComplete(app)} className="btn btn--complete">
-            Завершить приём
+      {status === "BOOKED" && (
+        <div className="appointment-card__actions">
+          <button
+            type="button"
+            onClick={() => onCancel(app)}
+            className="btn--second"
+          >
+            Отменить
           </button>
-          <button onClick={() => onCancel(app)} className="btn btn--cancel">
-            Отменить / Неявка
-          </button>
+          {isDoctor && (
+            <div>
+              <button
+                type="button"
+                onClick={() => onComplete(app)}
+                className="btn--prime"
+              >
+                Завершить приём
+              </button>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </article>
   );
 }
 

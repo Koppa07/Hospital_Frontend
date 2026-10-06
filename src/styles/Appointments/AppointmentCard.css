@@ -1,0 +1,92 @@
+.appointment-card {
+  min-width: 0;
+  padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.appointment-card:hover {
+  border-color: var(--color-soft-cyan);
+  box-shadow: var(--shadow-md);
+}
+.appointment-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.appointment-card__date {
+  min-width: 0;
+  color: var(--color-dark-brown);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.appointment-card__status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.appointment-card__badge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.appointment-card__status--booked {
+  background-color: rgba(160, 201, 203, 0.35);
+  color: var(--color-deep-teal);
+}
+.appointment-card__status--completed {
+  background-color: #e6f2e7;
+  color: var(--color-success);
+}
+.appointment-card__status--cancelled,
+.appointment-card__status--canceled,
+.appointment-card__status--no_show {
+  background-color: #ffebe9;
+  color: var(--color-error);
+}
+.appointment-card__status--default {
+  background-color: var(--color-cream-light);
+  color: var(--color-dark-brown);
+}
+.appointment-card__body {
+  flex: 1;
+}
+.appointment-card__body p {
+  margin: 6px 0;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.appointment-card__body p:first-child {
+  margin-top: 0;
+}
+.appointment-card__body p:last-child {
+  margin-bottom: 0;
+}
+.appointment-card__body strong {
+  color: var(--color-dark-brown);
+  font-weight: 600;
+}
+.appointment-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+}

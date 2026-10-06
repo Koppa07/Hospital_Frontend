@@ -1,5 +1,5 @@
 import api from "../../api";
-import "../../styles/Homes/home.css";
+import "../../styles/home.css";
 import { USER_INFO } from "../../constants";
 import ChangePassword from "../ChangePassword";
 import { useState } from "react";
@@ -36,7 +36,7 @@ function AdminHome() {
       </div>
       <div className="home__appointments">
         <Link to="/appointments" className="go-to">
-          Приемы
+          Записи
         </Link>
       </div>
       <section className="home__section">

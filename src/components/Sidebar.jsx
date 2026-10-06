@@ -119,7 +119,14 @@ function Sidebar({ onClose }) {
             icon={ICONS.Apps}
             onClick={handleLinkClick}
           >
-            Приемы
+            Записи
+          </SidebarLink>
+          <SidebarLink
+            to="/medical-history"
+            icon={ICONS.History}
+            onClick={handleLinkClick}
+          >
+            История болезни пациентов
           </SidebarLink>
         </div>
       )}
