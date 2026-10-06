@@ -190,7 +190,7 @@ function Doctors() {
             name="dep"
             value={filters.dep}
             onChange={handleFilterChange}
-            placeholder="Поиск по отделения"
+            placeholder="Поиск по отделению"
             className="my__input"
           />
         </div>

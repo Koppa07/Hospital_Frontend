@@ -1,0 +1,166 @@
+.go-to {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  width: 100%;
+  padding: 20px 24px;
+
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  color: var(--color-deep-teal);
+  font-size: 20px;
+  font-weight: 600;
+
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.go-to::after {
+  content: "→";
+
+  font-size: 24px;
+  font-weight: 400;
+
+  transition: transform var(--transition-fast);
+}
+
+.go-to:hover {
+  opacity: 1;
+
+  color: var(--color-accent);
+  border-color: var(--color-soft-cyan);
+
+  box-shadow: var(--shadow-md);
+}
+
+.home__reports,
+.home__schedule,
+.home__appointments,
+.home__history,
+.home__reports,
+.home_patients,
+.home__doctors {
+  margin-bottom: 14px;
+  margin-top: 18px;
+}
+.home_container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px 32px 64px;
+  color: var(--color-text-main);
+}
+
+.home__welcome {
+  margin-bottom: 36px;
+}
+
+.home__welcome h1 {
+  max-width: 1000px;
+  margin: 0 0 12px;
+  font-size: clamp(42px, 6vw, 72px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--color-deep-teal);
+}
+
+.home__subtitle {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+.home__warning-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 22px 24px;
+  background-color: var(--color-cream-light);
+  border: 1px solid var(--color-soft-cyan);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.home__warning-banner p {
+  margin: 0;
+  color: var(--color-dark-brown);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.home__error {
+  margin-bottom: 28px;
+  padding: 14px 18px;
+  background-color: #ffebe9;
+  border: 1px solid #ffc1c1;
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.home__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.home__actions .btn--prime,
+.home__actions .btn--second {
+  min-height: 50px;
+}
+
+.home__section {
+  margin-bottom: 48px;
+}
+
+.home__section h2 {
+  margin: 0 0 24px;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-dark-brown);
+}
+
+.home__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.home__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  margin: 0;
+  padding: 32px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+  font-size: 17px;
+  text-align: center;
+}
+
+.home__section {
+  padding-top: 4px;
+}
+
+.home__section > .btn--second {
+  min-height: 48px;
+}

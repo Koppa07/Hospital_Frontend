@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "../api";
 import AppointmentCard from "../components/Appointments/AppointmentCard";
 import Cancel from "../components/Appointments/Cancel";
@@ -13,7 +13,8 @@ function Appointments() {
 
   const isDoctor = currentUser?.role === "DOCTOR";
   const isPatient = currentUser?.role === "PATIENT";
-
+  const doctorsLoadedRef = useRef(false);
+  const appsLoadedRef = useRef(false);
   const [apps, setApps] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [error, setError] = useState(null);
@@ -26,86 +27,58 @@ function Appointments() {
   const [modalType, setModalType] = useState(null);
 
   useEffect(() => {
-    const fetchInitialData = async () => {
+    if (isDoctor) {
+      return;
+    }
+
+    if (doctorsLoadedRef.current) {
+      return;
+    }
+
+    doctorsLoadedRef.current = true;
+
+    const fetchDoctors = async () => {
       try {
-        if (!isPatient && !isDoctor) {
-          const doctorsRes = await api.get("/doctors/list/");
-          setDoctors(doctorsRes.data);
-        }
+        const doctorsRes = await api.get("/doctors/list/");
+        setDoctors(doctorsRes.data);
       } catch (err) {
-        console.error("Ошибка при загрузке начальных данных:", err);
+        console.error("Ошибка при загрузке врачей:", err);
+
         setError(
           err.response?.data?.detail || "Не удалось загрузить список врачей.",
         );
+
+        doctorsLoadedRef.current = false;
       }
     };
 
-    fetchInitialData();
-  }, [isPatient, isDoctor]);
+    fetchDoctors();
+  }, [isDoctor]);
 
   const fetchAppointments = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      if (isPatient) {
-        const res = await api.get("/appointments/");
+      const params = {};
 
-        let appointments = res.data;
-
-        if (date) {
-          appointments = appointments.filter((app) => {
-            const appointmentDate = app.appointment_date || app.start;
-
-            if (!appointmentDate) {
-              return false;
-            }
-
-            return (
-              new Date(appointmentDate).toISOString().slice(0, 10) === date
-            );
-          });
-        }
-
-        setApps(appointments);
-        return;
+      if (!isDoctor) {
+        params.doctor_id = doctorId;
       }
-
-      if (isDoctor) {
-        const params = {};
-        if (currentUser?.doctor_id) {
-          params.doctor_id = currentUser.doctor_id;
-        }
-        if (date) {
-          params.start = `${date}T00:00:00`;
-          params.end = `${date}T23:59:59`;
-        }
-        const res = await api.get("/schedule/", { params });
-        setApps(res.data);
-        return;
-      }
-
-      if (!doctorId) {
-        setApps([]);
-        return;
-      }
-
-      const params = {
-        doctor_id: doctorId,
-      };
-
       if (date) {
-        params.start = `${date}T00:00:00`;
-        params.end = `${date}T23:59:59`;
+        params.date = date;
       }
 
-      const res = await api.get("/schedule/", {
+      const res = await api.get("/appointments/", {
         params,
       });
 
       setApps(res.data);
     } catch (err) {
       console.error("Ошибка загрузки записей:", err);
+      console.error("STATUS:", err.response?.status);
+      console.error("DATA:", err.response?.data);
+      console.error("MESSAGE:", err.message);
 
       setError(
         err.response?.data?.detail ||
@@ -126,7 +99,7 @@ function Appointments() {
   const handleStatusUpdate = (appId, newStatus) => {
     setApps((prev) =>
       prev.map((item) =>
-        item.id === appId ? { ...item, status: newStatus } : item,
+        item.log_id === appId ? { ...item, status: newStatus } : item,
       ),
     );
   };
@@ -138,10 +111,12 @@ function Appointments() {
 
   const renderAppointmentCard = (app) => (
     <AppointmentCard
-      key={app.id}
+      key={app.log_id}
       app={app}
       onCancel={
-        app.status !== "CANCELLED" && app.status !== "COMPLETED"
+        app.status !== "CANCELLED" &&
+        app.status !== "COMPLETED" &&
+        app.status !== "NO_SHOW"
           ? (appointment) => {
               setSelectedApp(appointment);
               setModalType("cancel");
@@ -149,13 +124,17 @@ function Appointments() {
           : undefined
       }
       onComplete={
-        isDoctor && app.status !== "CANCELLED" && app.status !== "COMPLETED"
+        isDoctor &&
+        app.status !== "CANCELLED" &&
+        app.status !== "COMPLETED" &&
+        app.status !== "NO_SHOW"
           ? (appointment) => {
               setSelectedApp(appointment);
               setModalType("complete");
             }
           : undefined
       }
+      user={currentUser}
     />
   );
 
@@ -177,12 +156,11 @@ function Appointments() {
         )}
       </div>
       <div className="appointments__filters">
-        {!isPatient && !isDoctor && (
+        {!isDoctor && (
           <div className="filter__group">
             <label htmlFor="doctor-select">Врач:</label>
 
             <select
-              id="doctor-select"
               value={doctorId}
               onChange={(e) => setDoctorId(e.target.value)}
               disabled={isDoctor}

@@ -1,5 +1,5 @@
 import api from "../../api";
-import "../../styles/Homes/home.css";
+import "../../styles/home.css";
 import { USER_INFO } from "../../constants";
 import ChangePassword from "../ChangePassword";
 import { Link } from "react-router-dom";

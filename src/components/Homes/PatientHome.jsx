@@ -6,7 +6,8 @@ import Cancel from "../Appointments/Cancel";
 import PatientProfile from "../PatientProfile";
 import ChangePassword from "../ChangePassword";
 import { Link } from "react-router-dom";
-import "../../styles/Homes/home.css";
+import "../../styles/home.css";
+import AppointmentCard from "../Appointments/AppointmentCard";
 function PatientHome() {
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
@@ -51,7 +52,7 @@ function PatientHome() {
   const fetchAppointments = async () => {
     setError(null);
     try {
-      const res = await api.get("/appointments/");
+      const res = await api.get("/appointments/planned/");
       setUpcomingAppointments(res.data);
     } catch (err) {
       console.error("Не удалось загрузить записи:", err);
@@ -93,6 +94,24 @@ function PatientHome() {
     const updatedUser = { ...user, name: updatedProfile.name };
     localStorage.setItem(USER_INFO, JSON.stringify(updatedUser));
   };
+
+  const renderAppointmentCard = (app) => (
+    <AppointmentCard
+      key={app.log_id}
+      app={app}
+      onCancel={
+        app.status !== "CANCELLED" &&
+        app.status !== "COMPLETED" &&
+        app.status !== "NO_SHOW"
+          ? (appointment) => {
+              setSelectedApp(appointment);
+              setModalType("cancel");
+            }
+          : undefined
+      }
+      user={user}
+    />
+  );
 
   return (
     <div className="home_container">
@@ -146,62 +165,13 @@ function PatientHome() {
       </div>
 
       <section className="home__section">
-        <h2>Мои текущие записи</h2>
+        <h2>Мои запланированные записи</h2>
         {upcomingAppointments.length > 0 ? (
           <div className="home__grid">
-            {upcomingAppointments.slice(0, 2).map((app) => (
-              <div key={app.id || app.log_id} className="appointment-card">
-                <div className="appointment-card__header">
-                  <span className="appointment-card__date">
-                    {new Date(
-                      app.appointment_date || app.start_datetime,
-                    ).toLocaleString("ru-RU", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                  <span
-                    className={`status status--${app.status?.toLowerCase()}`}
-                  >
-                    {app.status}
-                  </span>
-                </div>
-                <div className="appointment-card__body">
-                  <p>
-                    <strong>Врач:</strong>{" "}
-                    {app.doctor_name ||
-                      app.doctor?.name ||
-                      `Врач #${app.doctor_id || app.doctor}`}
-                  </p>
-                  <p>
-                    <strong>Специализация:</strong>{" "}
-                    {app.specialization || "Терапевт"}
-                  </p>
-                  <p>
-                    <strong>Кабинет:</strong> {app.office || app.room || "—"}
-                  </p>
-                </div>
-                {app.status !== "CANCELLED" && app.status !== "COMPLETED" && (
-                  <div className="appointment-card__actions">
-                    <button
-                      className="btn btn--danger-outline"
-                      onClick={() => {
-                        setSelectedApp(app);
-                        setModalType("cancel");
-                      }}
-                    >
-                      Отменить запись
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+            {upcomingAppointments.slice(0, 2).map(renderAppointmentCard)}
           </div>
         ) : (
-          <p className="home__empty">У вас пока нет активных записей.</p>
+          <p className="home__empty">У вас пока нет запланированных записей.</p>
         )}
         <div className="home__appointments">
           <Link to="/appointments/" className="go-to">
