@@ -14,7 +14,6 @@ function Appointments() {
   const isDoctor = currentUser?.role === "DOCTOR";
   const isPatient = currentUser?.role === "PATIENT";
   const doctorsLoadedRef = useRef(false);
-  const appsLoadedRef = useRef(false);
   const [apps, setApps] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [error, setError] = useState(null);

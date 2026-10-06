@@ -1,9 +1,11 @@
 import "../styles/NotFound.css";
 function NotFound() {
   return (
-    <div>
-      <h1>404 Not Found</h1>
-      <p>Такой страницы нет</p>
+    <div className="not-found">
+      <div className="not-found__container">
+        <h2>404 Not Found</h2>
+        <p>Такой страницы нет</p>
+      </div>
     </div>
   );
 }

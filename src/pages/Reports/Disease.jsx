@@ -1,6 +1,6 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "../../styles/Reports/disease.css";
+import "../../styles/Reports/reports.css";
 import NotFound from "../NotFound";
 import { USER_INFO } from "../../constants";
 
@@ -32,21 +32,21 @@ function Disease() {
   }, []);
 
   return (
-    <div className="disease__container">
-      <div className="disease__header">
+    <div className="report__container">
+      <div className="report__header">
         <h2>Список болезней</h2>
       </div>
 
-      {error && <div className="diseases__error">{error}</div>}
+      {error && <div className="reports__error">{error}</div>}
 
-      <div className="diseases__grid">
+      <div className="reports__grid">
         {diseases.length > 0 ? (
           diseases.map((disease) => (
             <div
               key={disease.disease_id || disease.id}
-              className="disease__card"
+              className="report__card"
             >
-              <div className="disease__card-body">
+              <div className="report__card-body">
                 <h3>{disease.disease_title || disease.title}</h3>
                 {disease.disease_code && (
                   <p>
@@ -57,7 +57,7 @@ function Disease() {
             </div>
           ))
         ) : (
-          <p className="diseases__empty">
+          <p className="reports__empty">
             Болезни по вашему запросу не найдены.
           </p>
         )}

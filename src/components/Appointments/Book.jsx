@@ -125,11 +125,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
         payload.patient_id = Number(selectedPatient.id);
       }
 
-      console.log("BOOK PAYLOAD:", payload);
-
       const res = await api.post("/schedule/book/", payload);
-
-      console.log("BOOK RESPONSE:", res.data);
 
       onSuccess();
       onClose();

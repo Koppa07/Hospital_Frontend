@@ -6,6 +6,7 @@ import "@svar-ui/react-menu/style.css";
 import "@svar-ui/react-toolbar/style.css";
 import api from "../api";
 import { USER_INFO } from "../constants";
+import CreateSchedule from "../components/CreateSchedule";
 
 import "../styles/Schedule.css";
 
@@ -18,6 +19,8 @@ export const Schedule = () => {
 
   const [events, setEvents] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [selectedDoctorId, setSelectedDoctorId] = useState(
     isDoctor ? currentUser?.id : "",
@@ -86,20 +89,18 @@ export const Schedule = () => {
   useEffect(() => {
     if (!isAdmin) return;
 
-    api
-      .get("/doctors/list/")
-      .then((res) => {
-        const list = Array.isArray(res.data) ? res.data : [];
+    const fetchDoctors = async () => {
+      try {
+        const doctorsRes = await api.get("doctors/list/");
+        setDoctors(doctorsRes.data);
+      } catch (err) {
+        console.error("Ошибка при загрузке врачей:", err);
 
-        setDoctors(list);
-
-        if (list.length > 0) {
-          setSelectedDoctorId(list[0].id);
-        }
-      })
-      .catch((err) => {
-        console.error("Ошибка загрузки списка врачей:", err);
-      });
+        setError(
+          err.response?.data?.detail || "Не удалось загрузить список врачей.",
+        );
+      }
+    };
   }, [isAdmin]);
 
   useEffect(() => {
@@ -515,6 +516,12 @@ export const Schedule = () => {
             },
           ]}
         />
+      )}
+      {isAdmin && (
+        <div className="schedule__create-menu">
+          <label>Создать расписание для врача</label>
+          <button>Создать</button>
+        </div>
       )}
     </div>
   );

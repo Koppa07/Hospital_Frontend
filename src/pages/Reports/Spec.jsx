@@ -1,6 +1,6 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "../../styles/Reports/spec.css";
+import "../../styles/Reports/reports.css";
 import { USER_INFO } from "../../constants";
 
 function Spec() {
@@ -118,8 +118,8 @@ function Spec() {
   };
 
   return (
-    <div className="spec__container">
-      <div className="spec__header">
+    <div className="report__container">
+      <div className="report__header">
         <h2>Список специализаций</h2>
         {canWrite && (
           <button onClick={handleOpenAddModal} className="btn--prime">
@@ -128,17 +128,17 @@ function Spec() {
         )}
       </div>
 
-      {error && <div className="specs__error">{error}</div>}
+      {error && <div className="reports__error">{error}</div>}
 
-      <div className="specs__grid">
+      <div className="reports__grid">
         {specs.length > 0 ? (
           specs.map((spec) => (
-            <div key={spec.spec_id} className="spec__card">
-              <div className="spec__card-body">
+            <div key={spec.spec_id} className="report__card">
+              <div className="report__card-body">
                 <h3>{spec.spec_title}</h3>
               </div>
               {canWrite && (
-                <div className="spec__card-actions">
+                <div className="report__card-actions">
                   <button
                     onClick={() => handleOpenEditModal(spec)}
                     className="btn--second"
@@ -156,7 +156,7 @@ function Spec() {
             </div>
           ))
         ) : (
-          <p className="specs__empty">
+          <p className="reports__empty">
             Специализации по вашему запросу не найдены.
           </p>
         )}

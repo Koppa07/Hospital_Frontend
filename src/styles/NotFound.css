@@ -1,0 +1,29 @@
+.not-found {
+  height: 200px;
+  width: 750px;
+  position: relative;
+}
+
+.not-found__container {
+  width: 100%;
+  max-width: 750px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 2px solid #000;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-direction: column;
+}
+
+.not-found__container h2 {
+  font-size: 100px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+.not-found__container p {
+  font-size: 30px;
+  color: var(--color-text-main);
+  font-weight: 500;
+}
