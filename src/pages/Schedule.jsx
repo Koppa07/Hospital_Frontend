@@ -21,6 +21,7 @@ export const Schedule = () => {
   const [doctors, setDoctors] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [createScheduleOpen, setCreateScheduleOpen] = useState(false);
 
   const [selectedDoctorId, setSelectedDoctorId] = useState(
     isDoctor ? currentUser?.id : "",
@@ -101,9 +102,9 @@ export const Schedule = () => {
         );
       }
     };
+    fetchDoctors();
   }, [isAdmin]);
-
-  useEffect(() => {
+  const loadSchedule = async () => {
     const targetDoctorId = isDoctor ? currentUser?.id : selectedDoctorId;
 
     if (!targetDoctorId) {
@@ -111,31 +112,36 @@ export const Schedule = () => {
       return;
     }
 
-    api
-      .get(`/schedule/?doctor_id=${targetDoctorId}`)
-      .then((res) => {
-        const schedule = Array.isArray(res.data) ? res.data : [];
+    try {
+      setLoading(true);
 
-        const formattedEvents = schedule.map((item) => ({
-          id: item.id,
+      const res = await api.get(`/schedule/?doctor_id=${targetDoctorId}`);
+      const schedule = Array.isArray(res.data) ? res.data : [];
 
-          text: `Пациент: ${
-            item.patient_name || "Не указан"
-          } (${item.procedure || "Прием"})`,
+      const formattedEvents = schedule.map((item) => ({
+        id: item.id,
 
-          start: new Date(item.start_time),
-          end: new Date(item.end_time),
+        text: `Пациент: ${
+          item.patient_name || "Не указан"
+        } (${item.procedure || "Прием"})`,
 
-          doctorId: Number(item.doctor),
-        }));
+        start: new Date(item.start_time),
+        end: new Date(item.end_time),
 
-        setEvents(formattedEvents);
-      })
-      .catch((err) => {
-        console.error("Ошибка загрузки расписания:", err);
+        doctorId: Number(item.doctor),
+      }));
 
-        setEvents([]);
-      });
+      setEvents(formattedEvents);
+    } catch (err) {
+      console.error("Ошибка загрузки расписания:", err);
+      setEvents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSchedule();
   }, [selectedDoctorId, currentUser?.id, isDoctor]);
 
   const visibleEvents = useMemo(() => {
@@ -520,8 +526,21 @@ export const Schedule = () => {
       {isAdmin && (
         <div className="schedule__create-menu">
           <label>Создать расписание для врача</label>
-          <button>Создать</button>
+          <button
+            onClick={() => {
+              setCreateScheduleOpen(true);
+            }}
+          >
+            Создать
+          </button>
         </div>
+      )}
+      {isAdmin && createScheduleOpen && (
+        <CreateSchedule
+          doctors={doctors}
+          onClose={() => setCreateScheduleOpen(false)}
+          onSuccess={loadSchedule}
+        />
       )}
     </div>
   );

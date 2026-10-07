@@ -5,10 +5,11 @@ import "../styles/CreateSchedule.css";
 function CreateScheduleModal({ doctors, onClose, onSuccess }) {
   const [doctorId, setDoctorId] = useState("");
   const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const [startTime, setStartTime] = useState("8:00");
+  const [endTime, setEndTime] = useState("20:00");
 
-  const [availableHours, setAvailableHours] = useState([]);
-  const [loadingHours, setLoadingHours] = useState([]);
+  // const [availableHours, setAvailableHours] = useState([]);
+  // const [loadingHours, setLoadingHours] = useState([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -29,8 +30,12 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
       setError("Выберите врача");
       return;
     }
-    if (!time) {
-      setError("Выберите рабочие часы");
+    if (!startTime || !endTime) {
+      setError("Укажите время начала и окончания смены");
+      return;
+    }
+    if (startTime >= endTime) {
+      setError("Время окончания должно быть позже времени начала");
       return;
     }
     if (!date) {
@@ -42,8 +47,9 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
     try {
       const payload = {
         doctor_id: Number(doctorId),
-        date: Date(date),
-        time: TimeRanges(time),
+        date,
+        start_time: startTime,
+        end_time: endTime,
       };
 
       const res = await api.post("schedule/create/", payload);
@@ -66,7 +72,10 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
     }
   };
   return (
-    <div className="modal__overlay" onClick={onClose}>
+    <div
+      className="modal__overlay"
+      onClick={isSubmitting ? undefined : onClose}
+    >
       <div className="modal__content" onClick={(e) => e.stopPropagation()}>
         <h3>Создание графика врача</h3>
         {error && <div className="modal__error">{error}</div>}
@@ -98,21 +107,26 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
               className="my__input"
             />
           </div>
-          {doctorId && date && (
-            <div className="form__group">
-              <label>Доступное время:</label>
-              {loadingTime ? (
-                <p>Загрузка...</p>
-              ) : availableHours.length > 0 ? (
-                // TODO Выбор рабочих часов от - до
-                <div></div>
-              ) : (
-                <p className="form__hint">
-                  Нет доступных рабочих часов на выбранную дату
-                </p>
-              )}
-            </div>
-          )}
+          <div className="form__group">
+            <label>Начало рабочего дня</label>
+            <input
+              type="time"
+              required
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="my__input"
+            />
+          </div>
+          <div className="form__group">
+            <label>Конец рабочего дня</label>
+            <input
+              type="time"
+              required
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="my__input"
+            />
+          </div>
 
           <div className="modal__actions">
             <button
@@ -126,7 +140,9 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
             <button
               type="submit"
               className="btn--prime"
-              disabled={isSubmitting || !time || !date || !doctorId}
+              disabled={
+                isSubmitting || !startTime || !endTime || !date || !doctorId
+              }
             >
               {isSubmitting ? "Создание..." : "Создать"}
             </button>
