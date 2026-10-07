@@ -4,23 +4,21 @@ import Sidebar from "./Sidebar";
 import { Outlet } from "react-router-dom";
 import { USER_INFO } from "../constants";
 import api from "../api";
-
 function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileExists, setProfileExists] = useState(true);
   const [profileChecked, setProfileChecked] = useState(false);
   const sidebarRef = useRef(null);
-  const openSidebar = () => {
-    setSidebarOpen(true);
+  const menuButtonRef = useRef(null);
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => !prev);
   };
-
   const closeSidebar = () => {
     setSidebarOpen(false);
   };
   useEffect(() => {
     const savedUser = localStorage.getItem(USER_INFO);
     const user = savedUser ? JSON.parse(savedUser) : null;
-
     if (user?.role !== "PATIENT" && user?.role !== "DOCTOR") {
       setProfileChecked(true);
       return;
@@ -41,33 +39,31 @@ function Layout() {
     };
     checkProfile();
   }, []);
-
   useEffect(() => {
+    if (!sidebarOpen) return;
     const handleMouseDown = (event) => {
-      if (
-        sidebarOpen &&
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target)
-      ) {
-        closeSidebar();
+      const sidebar = sidebarRef.current;
+      const menuButton = menuButtonRef.current;
+      if (sidebar?.contains(event.target)) {
+        return;
       }
+      if (menuButton?.contains(event.target)) {
+        return;
+      }
+      closeSidebar();
     };
     document.addEventListener("mousedown", handleMouseDown);
     return () => {
       document.removeEventListener("mousedown", handleMouseDown);
     };
   }, [sidebarOpen]);
-
   return (
     <div className={`layout ${sidebarOpen ? "layout--sidebar-open" : ""}`}>
-      <Header onMenuClick={sidebarOpen ? closeSidebar : openSidebar} />
-
+      <Header onMenuClick={toggleSidebar} menuButtonRef={menuButtonRef} />
       <div className="layout__body">
         <div ref={sidebarRef}>
-          {" "}
-          <Sidebar onClose={closeSidebar} />{" "}
+          <Sidebar onClose={closeSidebar} />
         </div>
-
         <main className="layout__content">
           <Outlet context={{ profileExists, setProfileExists }} />
         </main>
@@ -75,5 +71,4 @@ function Layout() {
     </div>
   );
 }
-
 export default Layout;

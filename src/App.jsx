@@ -44,55 +44,99 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <ProtectedRoute
-            requireProfile
+          <Route
             path="/medical-history"
-            element={<History />}
+            element={
+              <ProtectedRoute requireProfile>
+                <History />
+              </ProtectedRoute>
+            }
           />
-          <ProtectedRoute
-            requireProfile
+          <Route
             path="/schedule"
-            element={<Schedule />}
+            element={
+              <ProtectedRoute>
+                <Schedule />
+              </ProtectedRoute>
+              // requireProfile
+            }
           />
-          <ProtectedRoute
-            requireProfile
+          <Route
             path="/patients"
-            element={<Patients />}
+            element={
+              <ProtectedRoute requireProfile>
+                <Patients />
+              </ProtectedRoute>
+            }
           />
-          <ProtectedRoute
-            requireProfile
+
+          <Route
             path="/doctors"
-            element={<Doctors />}
+            element={
+              <ProtectedRoute requireProfile>
+                <Doctors />
+              </ProtectedRoute>
+            }
           />
-          <ProtectedRoute
-            requireProfile
+          <Route
             path="/departments"
-            element={<Dep />}
+            element={
+              <ProtectedRoute requireProfile>
+                <Dep />
+              </ProtectedRoute>
+            }
           />
-          <ProtectedRoute requireProfile path="/rooms" element={<Room />} />
-          <ProtectedRoute
-            requireProfile
+
+          <Route
+            path="/rooms"
+            element={
+              <ProtectedRoute requireProfile>
+                <Room />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/specializations"
-            element={<Spec />}
+            element={
+              <ProtectedRoute requireProfile>
+                <Spec />
+              </ProtectedRoute>
+            }
           />
-          <ProtectedRoute requireProfile path="/drugs" element={<Drug />} />
-          <ProtectedRoute
-            requireProfile
+          <Route
+            path="/drug"
+            element={
+              <ProtectedRoute requireProfile>
+                <Drug />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/diseases"
-            element={<Disease />}
+            element={
+              <ProtectedRoute requireProfile>
+                <Disease />
+              </ProtectedRoute>
+            }
           />
-          <ProtectedRoute
-            requireProfile
+
+          <Route
             path="/appointments"
-            element={<Appointments />}
+            element={
+              <ProtectedRoute requireProfile>
+                <Appointments />
+              </ProtectedRoute>
+            }
           />
-          <ProtectedRoute
-            requireProfile
+          <Route
             path="/reports"
-            element={<Reports />}
+            element={
+              <ProtectedRoute requireProfile>
+                <Reports />
+              </ProtectedRoute>
+            }
           />
         </Route>
-
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

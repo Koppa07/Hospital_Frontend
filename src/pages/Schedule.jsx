@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Calendar, Editor, ContextMenu } from "@svar-ui/react-calendar";
+import { Locale } from "@svar-ui/react-core";
+import { ru } from "@svar-ui/calendar-locales";
+import { ru as ruCore } from "@svar-ui/core-locales";
 import "@svar-ui/react-core/style.css";
 import "@svar-ui/react-editor/style.css";
 import "@svar-ui/react-menu/style.css";
@@ -7,8 +10,12 @@ import "@svar-ui/react-toolbar/style.css";
 import api from "../api";
 import { USER_INFO } from "../constants";
 import CreateSchedule from "../components/CreateSchedule";
-
 import "../styles/Schedule.css";
+
+const ruLocale = {
+  ...ruCore,
+  ...ru,
+};
 
 export const Schedule = () => {
   const savedUser = localStorage.getItem(USER_INFO);
@@ -114,6 +121,7 @@ export const Schedule = () => {
 
     try {
       setLoading(true);
+      setError(null);
 
       const res = await api.get(`/schedule/?doctor_id=${targetDoctorId}`);
       const schedule = Array.isArray(res.data) ? res.data : [];
@@ -147,8 +155,11 @@ export const Schedule = () => {
   const visibleEvents = useMemo(() => {
     if (isDoctor) {
       return events.filter(
-        (event) => Number(event.doctorId) === Number(currentUser?.id),
+        (event) => Number(event.doctorId) === Number(currentUser?.doctor_id),
       );
+    }
+    if (!selectedDoctorId) {
+      return [];
     }
 
     return events.filter(
@@ -216,7 +227,7 @@ export const Schedule = () => {
 
   const handleSaveEvent = async (updatedEvent) => {
     const targetDoctorId = isDoctor
-      ? currentUser?.id
+      ? currentUser?.doctor_id
       : Number(selectedDoctorId);
 
     const patientId = Number(updatedEvent.patient_id || updatedEvent.text);
@@ -322,7 +333,7 @@ export const Schedule = () => {
 
           <button
             type="button"
-            className="schedule__sidebar-add"
+            className="schedule__sidebar- btn--prime"
             onClick={() => {
               const now = new Date();
 
@@ -418,15 +429,13 @@ export const Schedule = () => {
               ) : (
                 doctors.map((doctor) => (
                   <option key={doctor.id} value={doctor.id}>
-                    {doctor.doctor_name || doctor.name || `Д-р ${doctor.id}`}
+                    {doctor.doctor_name || doctor.name || `Врач #${doctor.id}`}
                   </option>
                 ))
               )}
             </select>
           )}
         </div>
-
-        {/* Quick filter */}
 
         <div className="schedule__sidebar-section">
           <div className="schedule__section-label">Отображение</div>
@@ -442,8 +451,6 @@ export const Schedule = () => {
           </button>
         </div>
 
-        {/* Statistics */}
-
         <div className="schedule__stats">
           <div className="schedule__stat">
             <span className="schedule__stat-value">{bookedCount}</span>
@@ -458,10 +465,6 @@ export const Schedule = () => {
           </div>
         </div>
       </aside>
-
-      {/* =====================================================
-          MAIN CALENDAR
-          ===================================================== */}
 
       <main className="schedule__main">
         <div className="schedule__main-header">
@@ -481,48 +484,44 @@ export const Schedule = () => {
             </button>
           </div>
         </div>
-
+        {error && <div className="schedule__error">{error}</div>}
+        {loading && (
+          <div className="schedule__loading">Загрузка расписания...</div>
+        )}
         <div className="schedule__calendar-wrapper">
-          <Calendar
-            events={visibleEvents}
-            mode="week"
-            locale={ruLocale}
-            onEventClick={handleEventClick}
-            onEventContextMenu={handleContextMenu}
-            onCellClick={handleCellClick}
-          />
+          <Locale key="ru" words={ruLocale}>
+            <Calendar
+              events={visibleEvents}
+              mode="week"
+              onEventClick={handleEventClick}
+              onEventContextMenu={handleContextMenu}
+              onCellClick={handleCellClick}
+            />
+            {editorState.open && (
+              <Editor
+                event={editorState.event}
+                onSave={handleSaveEvent}
+                onClose={closeEditor}
+              />
+            )}
+            {contextMenuState.open && (
+              <div>
+                <ContextMenu
+                  point={contextMenuState.point}
+                  onClose={closeContextMenu}
+                  items={[
+                    {
+                      id: "edit",
+                      text: "Редактировать",
+                      action: editFromContextMenu,
+                    },
+                  ]}
+                />
+              </div>
+            )}
+          </Locale>
         </div>
       </main>
-
-      {/* =====================================================
-          EDITOR
-          ===================================================== */}
-
-      {editorState.open && (
-        <Editor
-          event={editorState.event}
-          onSave={handleSaveEvent}
-          onClose={closeEditor}
-        />
-      )}
-
-      {/* =====================================================
-          CONTEXT MENU
-          ===================================================== */}
-
-      {contextMenuState.open && (
-        <ContextMenu
-          point={contextMenuState.point}
-          onClose={closeContextMenu}
-          items={[
-            {
-              id: "edit",
-              text: ruLocale.contextMenu.edit,
-              action: editFromContextMenu,
-            },
-          ]}
-        />
-      )}
       {isAdmin && (
         <div className="schedule__create-menu">
           <label>Создать расписание для врача</label>
@@ -530,6 +529,7 @@ export const Schedule = () => {
             onClick={() => {
               setCreateScheduleOpen(true);
             }}
+            className="btn--prime"
           >
             Создать
           </button>

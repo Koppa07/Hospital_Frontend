@@ -4,7 +4,7 @@ import menuIcon from "../assets/images/Menu.svg";
 
 import "../styles/Header.css";
 
-function Header({ onMenuClick }) {
+function Header({ onMenuClick, menuButtonRef }) {
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
 
@@ -12,6 +12,7 @@ function Header({ onMenuClick }) {
     <header className="header__container">
       <div className="header__sidebar">
         <button
+          ref={menuButtonRef}
           type="button"
           onClick={onMenuClick}
           className="header__menu-button"
