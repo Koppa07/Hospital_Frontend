@@ -4,7 +4,7 @@ import { USER_INFO, ICONS } from "../constants";
 import "../styles/Sidebar.css";
 import SidebarLink from "./SidebarLink";
 
-function Sidebar({ onClose }) {
+function Sidebar({ onClose, profileExists, profileChecked }) {
   const dropdownRef = useRef(null);
   const [open, setOpen] = useState(false);
   const savedUser = localStorage.getItem(USER_INFO);
@@ -13,6 +13,8 @@ function Sidebar({ onClose }) {
   const isDoctor = user?.role === "DOCTOR";
   const isAdmin = user?.role === "ADMIN";
   const isRegistrar = user?.role === "REGISTRAR";
+  const menuDisabled =
+    (isPatient || isDoctor) && profileChecked && !profileExists;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -29,7 +31,12 @@ function Sidebar({ onClose }) {
 
   return (
     <aside className="sidebar__container">
-      <SidebarLink to="/" icon={ICONS.Home} onClick={handleLinkClick}>
+      <SidebarLink
+        to="/"
+        icon={ICONS.Home}
+        onClick={handleLinkClick}
+        disabled={menuDisabled}
+      >
         Главная
       </SidebarLink>
       {isPatient && (
@@ -39,6 +46,7 @@ function Sidebar({ onClose }) {
             end
             icon={ICONS.Apps}
             onClick={handleLinkClick}
+            disabled={menuDisabled}
           >
             Записи на прием
           </SidebarLink>
@@ -46,6 +54,7 @@ function Sidebar({ onClose }) {
             to="/medical-history"
             icon={ICONS.History}
             onClick={handleLinkClick}
+            disabled={menuDisabled}
           >
             История болезни
           </SidebarLink>
@@ -58,6 +67,7 @@ function Sidebar({ onClose }) {
               type="button"
               onClick={() => setOpen((prev) => !prev)}
               className="sidebar__dropdown-button"
+              disabled={menuDisabled}
             >
               <span className="sidebar__button-content">
                 <img src={ICONS.Reports} alt="" className="sidebar__icon" />
@@ -95,6 +105,7 @@ function Sidebar({ onClose }) {
             to="/doctors"
             icon={ICONS.Docs}
             onClick={handleLinkClick}
+            disabled={menuDisabled}
           >
             Персонал
           </SidebarLink>
@@ -102,6 +113,7 @@ function Sidebar({ onClose }) {
             to="/schedule"
             icon={ICONS.Schedule}
             onClick={handleLinkClick}
+            disabled={menuDisabled}
           >
             Расписание
           </SidebarLink>
@@ -109,6 +121,7 @@ function Sidebar({ onClose }) {
             <SidebarLink
               to="/patients"
               icon={ICONS.Pats}
+              disabled={menuDisabled}
               onClick={handleLinkClick}
             >
               Пациенты
@@ -118,6 +131,7 @@ function Sidebar({ onClose }) {
             to="/appointments"
             icon={ICONS.Apps}
             onClick={handleLinkClick}
+            disabled={menuDisabled}
           >
             Записи
           </SidebarLink>
@@ -125,6 +139,7 @@ function Sidebar({ onClose }) {
             to="/medical-history"
             icon={ICONS.History}
             onClick={handleLinkClick}
+            disabled={menuDisabled}
           >
             История болезни пациентов
           </SidebarLink>

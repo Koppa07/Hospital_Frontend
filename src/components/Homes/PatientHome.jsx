@@ -8,7 +8,9 @@ import ChangePassword from "../ChangePassword";
 import { Link } from "react-router-dom";
 import "../../styles/home.css";
 import AppointmentCard from "../Appointments/AppointmentCard";
+import { useOutletContext } from "react-router-dom";
 function PatientHome() {
+  const { setProfileExists } = useOutletContext();
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
 
@@ -37,6 +39,9 @@ function PatientHome() {
   };
 
   useEffect(() => {
+    if (!profile) {
+      return;
+    }
     const fetchDoctors = async () => {
       try {
         const doctorsRes = await api.get("/doctors/list/");
@@ -70,6 +75,9 @@ function PatientHome() {
   };
 
   useEffect(() => {
+    if (!profile) {
+      return;
+    }
     fetchAppointments();
     fetchMedicalHistory();
   }, []);
@@ -90,6 +98,7 @@ function PatientHome() {
 
   const handleProfileSuccess = (updatedProfile) => {
     setProfile(updatedProfile);
+    setProfileExists(true);
     setModalType(null);
     const updatedUser = { ...user, name: updatedProfile.name };
     localStorage.setItem(USER_INFO, JSON.stringify(updatedUser));

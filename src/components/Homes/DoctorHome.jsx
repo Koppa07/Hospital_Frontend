@@ -7,7 +7,9 @@ import ChangePassword from "../ChangePassword";
 import { Link } from "react-router-dom";
 import "../../styles/home.css";
 import AppointmentCard from "../Appointments/AppointmentCard";
+import { useOutletContext } from "react-router-dom";
 function DoctorHome() {
+  const { setProfileExists } = useOutletContext();
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
   const [modalType, setModalType] = useState(null);
@@ -42,6 +44,9 @@ function DoctorHome() {
     }
   };
   useEffect(() => {
+    if (!profile) {
+      return;
+    }
     fetchAppointments();
   }, []);
   const handleStatusUpdate = (appId, newStatus) => {
@@ -55,6 +60,7 @@ function DoctorHome() {
   };
   const handleProfileSuccess = (updatedProfile) => {
     setProfile(updatedProfile);
+    setProfileExists(true);
     setModalType(null);
     const updatedUser = { ...user, name: updatedProfile.doctor_name };
     localStorage.setItem(USER_INFO, JSON.stringify(updatedUser));

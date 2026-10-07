@@ -44,17 +44,53 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/medical-history" element={<History />} />
-          <Route path="/schedule" element={<Schedule />} />
-          <Route path="/patients" element={<Patients />} />
-          <Route path="/doctors" element={<Doctors />} />
-          <Route path="/departments" element={<Dep />} />
-          <Route path="/rooms" element={<Room />} />
-          <Route path="/specializations" element={<Spec />} />
-          <Route path="/drugs" element={<Drug />} />
-          <Route path="/diseases" element={<Disease />} />
-          <Route path="/appointments" element={<Appointments />} />
-          <Route path="/reports" element={<Reports />} />
+          <ProtectedRoute
+            requireProfile
+            path="/medical-history"
+            element={<History />}
+          />
+          <ProtectedRoute
+            requireProfile
+            path="/schedule"
+            element={<Schedule />}
+          />
+          <ProtectedRoute
+            requireProfile
+            path="/patients"
+            element={<Patients />}
+          />
+          <ProtectedRoute
+            requireProfile
+            path="/doctors"
+            element={<Doctors />}
+          />
+          <ProtectedRoute
+            requireProfile
+            path="/departments"
+            element={<Dep />}
+          />
+          <ProtectedRoute requireProfile path="/rooms" element={<Room />} />
+          <ProtectedRoute
+            requireProfile
+            path="/specializations"
+            element={<Spec />}
+          />
+          <ProtectedRoute requireProfile path="/drugs" element={<Drug />} />
+          <ProtectedRoute
+            requireProfile
+            path="/diseases"
+            element={<Disease />}
+          />
+          <ProtectedRoute
+            requireProfile
+            path="/appointments"
+            element={<Appointments />}
+          />
+          <ProtectedRoute
+            requireProfile
+            path="/reports"
+            element={<Reports />}
+          />
         </Route>
 
         <Route path="*" element={<NotFound />} />
