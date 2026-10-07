@@ -1,6 +1,6 @@
 import { useState } from "react";
 import api from "../../api";
-import "C:/Users/Koppa07/vsCodeProjects/frontend/src/styles/Appointments/Complete.css";
+import "../../styles/Appointments/Complete.css";
 function CompleteAppointmentModal({ appointment, onClose, onSuccess }) {
   const [diseaseId, setDiseaseId] = useState("");
   const [complains, setComplains] = useState("");

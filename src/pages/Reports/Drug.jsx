@@ -1,6 +1,6 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "../../styles/Reports/drugs.css";
+import "../../styles/Reports/reports.css";
 import { USER_INFO } from "../../constants";
 
 function Drug() {
@@ -123,8 +123,8 @@ function Drug() {
   };
 
   return (
-    <div className="drug__container">
-      <div className="drug__header">
+    <div className="report__container">
+      <div className="report__header">
         <h2>Список медикаментов</h2>
         {canWrite && (
           <button onClick={handleOpenAddModal} className="btn--prime">
@@ -133,13 +133,13 @@ function Drug() {
         )}
       </div>
 
-      {error && <div className="drugs__error">{error}</div>}
+      {error && <div className="reports__error">{error}</div>}
 
-      <div className="drugs__grid">
+      <div className="reports__grid">
         {drugs.length > 0 ? (
           drugs.map((drug) => (
-            <div key={drug.drug_id || drug.id} className="drug__card">
-              <div className="drug__card-body">
+            <div key={drug.drug_id || drug.id} className="report__card">
+              <div className="report__card-body">
                 <h3>{drug.drug_title || drug.title}</h3>
                 {drug.drug_type && (
                   <p>
@@ -149,7 +149,7 @@ function Drug() {
                 )}
               </div>
               {canWrite && (
-                <div className="drug__card-actions">
+                <div className="report__card-actions">
                   <button
                     onClick={() => handleOpenEditModal(drug)}
                     className="btn--second"
@@ -167,7 +167,7 @@ function Drug() {
             </div>
           ))
         ) : (
-          <p className="drugs__empty">
+          <p className="reports__empty">
             Медикамента по вашему запросу не найдены.
           </p>
         )}

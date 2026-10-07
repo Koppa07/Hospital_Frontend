@@ -1,6 +1,6 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
-import "../../styles/Reports/dep.css";
+import "../../styles/Reports/reports.css";
 import { USER_INFO } from "../../constants";
 
 function Dep() {
@@ -120,8 +120,8 @@ function Dep() {
   };
 
   return (
-    <div className="dep__container">
-      <div className="dep__header">
+    <div className="report__container">
+      <div className="report__header">
         <h2>Список отделений</h2>
         {canWrite && (
           <button onClick={handleOpenAddModal} className="btn--prime">
@@ -130,13 +130,13 @@ function Dep() {
         )}
       </div>
 
-      {error && <div className="deps__error">{error}</div>}
+      {error && <div className="reports__error">{error}</div>}
 
-      <div className="deps__grid">
+      <div className="reports__grid">
         {deps.length > 0 ? (
           deps.map((dep) => (
-            <div key={dep.dep_id || dep.id} className="dep__card">
-              <div className="dep__card-body">
+            <div key={dep.dep_id || dep.id} className="report__card">
+              <div className="report__card-body">
                 <h3>{dep.dep_title || dep}</h3>
                 {dep.name_of_manager && (
                   <p>
@@ -145,7 +145,7 @@ function Dep() {
                 )}
               </div>
               {canWrite && (
-                <div className="dep__card-actions">
+                <div className="report__card-actions">
                   <button
                     onClick={() => handleOpenEditModal(dep)}
                     className="btn--second"
@@ -163,7 +163,9 @@ function Dep() {
             </div>
           ))
         ) : (
-          <p className="deps__empty">Отделения по вашему запросу не найдены.</p>
+          <p className="reports__empty">
+            Отделения по вашему запросу не найдены.
+          </p>
         )}
       </div>
 

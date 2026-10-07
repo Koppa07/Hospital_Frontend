@@ -1,6 +1,7 @@
 import api from "../../api";
 import { useState, useEffect } from "react";
 import "../../styles/Reports/rooms.css";
+import "../../styles/Reports/reports.css";
 import { USER_INFO } from "../../constants";
 
 const AVAILABLE_EQUIPMENT = [
@@ -181,8 +182,8 @@ function Room() {
   };
 
   return (
-    <div className="room__container">
-      <div className="room__header">
+    <div className="report__container">
+      <div className="report__header">
         <h2>Список кабинетов</h2>
         {canWrite && (
           <button onClick={handleOpenAddModal} className="btn--prime">
@@ -191,13 +192,13 @@ function Room() {
         )}
       </div>
 
-      {error && <div className="rooms__error">{error}</div>}
+      {error && <div className="reports__error">{error}</div>}
 
-      <div className="rooms__grid">
+      <div className="reports__grid">
         {rooms.length > 0 ? (
           rooms.map((room) => (
-            <div key={room.id || room.room_id} className="room__card">
-              <div className="room__card-body">
+            <div key={room.id || room.room_id} className="report__card">
+              <div className="report__card-body">
                 <h3>Кабинет №{room.room_number || room.number}</h3>
                 <p>
                   <strong>Оборудование:</strong>{" "}
@@ -205,7 +206,7 @@ function Room() {
                 </p>
               </div>
               {canWrite && (
-                <div className="room__card-actions">
+                <div className="report__card-actions">
                   <button
                     onClick={() => handleOpenEditModal(room)}
                     className="btn--second"
@@ -223,7 +224,9 @@ function Room() {
             </div>
           ))
         ) : (
-          <p className="rooms__empty">Кабинеты по вашему запросу не найдены.</p>
+          <p className="reports__empty">
+            Кабинеты по вашему запросу не найдены.
+          </p>
         )}
       </div>
 

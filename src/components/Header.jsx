@@ -20,16 +20,10 @@ function Header({ onMenuClick }) {
           <img src={menuIcon} alt="" className="header__menu-icon" />
         </button>
       </div>
-      <div className="header__page-name">
-        <p>{/*TODO получение имени текущей страницы*/}</p>
-      </div>
       <div className="header__username-role">
         <Link to="/">
-          {user?.name ||
-            user?.username ||
-            user?.doctor_name ||
-            user?.patient_name}
-        </Link>{" "}
+          {user?.doctor_name || user?.patient_name || user?.username}
+        </Link>
         {/*TODO получение имени пользователя*/}
         <p>{user?.role}</p>
       </div>
