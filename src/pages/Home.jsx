@@ -1,5 +1,5 @@
 import { USER_INFO } from "../constants";
-import "../styles/Home.css";
+import "../styles/home.css";
 import PatientHome from "../components/Homes/PatientHome";
 import AdminHome from "../components/Homes/AdminHome";
 import DoctorHome from "../components/Homes/DoctorHome";

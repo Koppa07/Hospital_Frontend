@@ -55,10 +55,9 @@ function App() {
           <Route
             path="/schedule"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireProfile>
                 <Schedule />
               </ProtectedRoute>
-              // requireProfile
             }
           />
           <Route
