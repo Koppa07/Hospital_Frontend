@@ -31,6 +31,7 @@ function AppointmentCard({ app, onCancel, onComplete, user }) {
         <span className="appointment-card__date">
           {appointmentDate
             ? new Date(appointmentDate).toLocaleString("ru-RU", {
+                timeZone: "Europe/Moscow",
                 day: "2-digit",
                 month: "long",
                 year: "numeric",
@@ -67,7 +68,7 @@ function AppointmentCard({ app, onCancel, onComplete, user }) {
           </>
         )}
 
-        {isDoctor && (
+        {!isPatient && (
           <p>
             <strong>Пациент:</strong>{" "}
             {app.patient_name || app.patient?.name || "—"}

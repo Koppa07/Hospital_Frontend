@@ -51,7 +51,6 @@ function PatientHome() {
       }
     };
     fetchDoctors();
-    fetchProfile();
   }, []);
 
   const fetchAppointments = async () => {
@@ -103,6 +102,9 @@ function PatientHome() {
     const updatedUser = { ...user, name: updatedProfile.name };
     localStorage.setItem(USER_INFO, JSON.stringify(updatedUser));
   };
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const renderAppointmentCard = (app) => (
     <AppointmentCard
@@ -132,7 +134,7 @@ function PatientHome() {
         <p className="home__subtitle">Личный кабинет пациента</p>
       </div>
 
-      {isProfileLoaded && !profile && (
+      {!isProfileLoaded && !profile && (
         <div className="home__warning-banner">
           <p>
             ⚠️ Для записи на прием необходимо сначала заполнить персональные

@@ -107,9 +107,7 @@ function Patients() {
       await api.delete(`/patients/${patId}/`);
       setPatients((prev) =>
         prev.filter(
-          (item) =>
-            (item.patient_id || item.pat_id || item.id || item.card_number) !==
-            patId,
+          (item) => (item.patient_id || item.id || item.card_number) !== patId,
         ),
       );
     } catch (err) {

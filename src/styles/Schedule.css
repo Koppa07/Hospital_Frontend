@@ -577,3 +577,9 @@
     animation: none !important;
   }
 }
+
+.schedule__day.is-selected {
+  background: var(--color-primary-dark);
+  color: #fff;
+  border-radius: 50%;
+}

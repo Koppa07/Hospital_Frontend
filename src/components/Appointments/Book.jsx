@@ -25,6 +25,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
     if (isPatient && user?.patient_id) {
       setSelectedPatient({
         id: user.patient_id,
+        name: user.patient_name,
       });
     }
   }, [isPatient, user]);
@@ -87,7 +88,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
     const fullName = patient.patient_name || patient.name;
     setSelectedPatient({
       id: patient.patient_id || patient.card_number,
-      name: fullName,
+      name: patient.patient_name,
     });
     setSearchTerm(fullName);
     setIsDropdownOpen(false);
@@ -119,7 +120,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
       const payload = {
         doctor_id: Number(doctorId),
         slot_id: Number(selectedSlot),
-        patient_id: Number(patientId),
+        patient_id: Number(selectedPatient.id),
       };
       if (!isPatient) {
         payload.patient_id = Number(selectedPatient.id);
@@ -256,6 +257,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
                     const timeStr = new Date(
                       slot.start_datetime,
                     ).toLocaleTimeString([], {
+                      timeZone: "Europe/Moscow",
                       hour: "2-digit",
                       minute: "2-digit",
                     });

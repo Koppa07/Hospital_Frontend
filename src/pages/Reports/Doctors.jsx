@@ -28,6 +28,7 @@ function Doctors() {
     spec: "",
     room: "",
   });
+  const [credentials, setCredentials] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -114,6 +115,7 @@ function Doctors() {
     setIsModalOpen(false);
     setSubmitError(null);
     setEditingDocId(null);
+    setCredentials(null);
   };
 
   const handleDelete = async (doc) => {
@@ -144,11 +146,14 @@ function Doctors() {
     try {
       if (editingDocId) {
         await api.put(`/doctors/${editingDocId}/`, formData);
+        await fetchDoctors();
+        handleCloseModal();
       } else {
-        await api.post("/doctors/", formData);
+        const res = await api.post("/doctors/", formData);
+
+        setCredentials(res.data.credentials);
+        await fetchDoctors();
       }
-      await fetchDoctors();
-      handleCloseModal();
     } catch (err) {
       const errorData = err.response?.data;
       if (typeof errorData === "object" && errorData !== null) {
@@ -377,6 +382,24 @@ function Doctors() {
               </div>
             </form>
           </div>
+          {credentials && (
+            <div className="credentials__box">
+              <h3>Данные для входа врача</h3>
+              <p>
+                <strong>Логин:</strong> {credentials.username}
+              </p>
+              <p>
+                <strong>Пароль:</strong> {credentials.password}
+              </p>
+              <button
+                type="button"
+                onClick={() => setCredentials(null)}
+                className="btn--prime"
+              >
+                Закрыть
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
