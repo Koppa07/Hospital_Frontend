@@ -2,9 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import api from "../../api";
 import "../../styles/Appointments/Book.css";
 
-function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
-  const [doctorId, setDoctorId] = useState("");
-  const [date, setDate] = useState("");
+function BookAppointmentModal({
+  doctors,
+  onClose,
+  onSuccess,
+  user,
+  initialDoctorId = "",
+  initialDate = "",
+}) {
+  const [doctorId, setDoctorId] = useState(String(initialDoctorId));
+  const [date, setDate] = useState(initialDate);
 
   const [patients, setPatients] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,7 +133,7 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
         payload.patient_id = Number(selectedPatient.id);
       }
 
-      const res = await api.post("/schedule/book/", payload);
+      await api.post("/schedule/book/", payload);
 
       onSuccess();
       onClose();
@@ -163,11 +170,14 @@ function BookAppointmentModal({ doctors, onClose, onSuccess, user }) {
               className="my__input"
             >
               <option value="">-- Выберите врача --</option>
-              {doctors.map((doc) => (
-                <option key={doc.doctor_id} value={doc.doctor_id}>
-                  {doc.doctor_name || doc.name || `Врач #${doc.doctor_id}`}
-                </option>
-              ))}
+              {doctors.map((doc) => {
+                const id = doc.doctor_id ?? doc.id;
+                return (
+                  <option key={id} value={id}>
+                    {doc.doctor_name || doc.name || `Врач #${id}`}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

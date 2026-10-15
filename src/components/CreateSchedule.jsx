@@ -1,29 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import api from "../api";
 import "../styles/CreateSchedule.css";
 
-function CreateScheduleModal({ doctors, onClose, onSuccess }) {
-  const [doctorId, setDoctorId] = useState("");
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("8:00");
+function CreateScheduleModal({
+  doctors,
+  onClose,
+  onSuccess,
+  initialDoctorId = "",
+  initialDate = "",
+}) {
+  const [doctorId, setDoctorId] = useState(String(initialDoctorId));
+  const [date, setDate] = useState(initialDate);
+  const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("20:00");
-
-  // const [availableHours, setAvailableHours] = useState([]);
-  // const [loadingHours, setLoadingHours] = useState([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-  const handleSubnit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!doctorId) {
@@ -40,6 +34,7 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
     }
     if (!date) {
       setError("Выберите дату");
+      return;
     }
     setIsSubmitting(true);
     setError(null);
@@ -52,10 +47,9 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
         end_time: endTime,
       };
 
-      const res = await api.post("schedule/create/", payload);
+      await api.post("schedule/create/", payload);
 
-      onSuccess();
-      onClose();
+      await onSuccess();
     } catch (err) {
       console.error("CREATE SCHEDULE ERROR:", err);
       console.error("STATUS:", err.response?.status);
@@ -80,7 +74,7 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
         <h3>Создание графика врача</h3>
         {error && <div className="modal__error">{error}</div>}
 
-        <form onSubmit={handleSubnit}>
+        <form onSubmit={handleSubmit}>
           <div className="form__group">
             <label>Врач:</label>
             <select
@@ -90,11 +84,14 @@ function CreateScheduleModal({ doctors, onClose, onSuccess }) {
               className="my__input"
             >
               <option value="">-- Выберите врача --</option>
-              {doctors.map((doc) => (
-                <option key={doc.doctor_id} value={doc.doctor_id}>
-                  {doc.doctor_name || doc.name || `Врач #${doc.doctor_id}`}
-                </option>
-              ))}
+              {doctors.map((doc) => {
+                const id = doc.doctor_id ?? doc.id;
+                return (
+                  <option key={id} value={id}>
+                    {doc.doctor_name || doc.name || `Врач #${id}`}
+                  </option>
+                );
+              })}
             </select>
           </div>
           <div className="form__group">

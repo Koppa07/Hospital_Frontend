@@ -1,24 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Calendar, Editor, ContextMenu } from "@svar-ui/react-calendar";
-import { Locale } from "@svar-ui/react-core";
-import { ru } from "@svar-ui/calendar-locales";
-import { ru as ruCore } from "@svar-ui/core-locales";
-
-import "@svar-ui/react-core/style.css";
-import "@svar-ui/react-editor/style.css";
-import "@svar-ui/react-menu/style.css";
-import "@svar-ui/react-toolbar/style.css";
-
 import api from "../api";
 import { USER_INFO } from "../constants";
+import BookAppointmentModal from "../components/Appointments/Book";
 import CreateSchedule from "../components/CreateSchedule";
 import "../styles/Schedule.css";
-
-const ruLocale = {
-  ...ruCore,
-  ...ru,
-};
 
 const getStoredUser = () => {
   try {
@@ -32,13 +18,21 @@ const getStoredUser = () => {
 const startOfDay = (date) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
+const startOfWeek = (date) => {
+  const result = startOfDay(date);
+  result.setDate(result.getDate() - ((result.getDay() + 6) % 7));
+  return result;
+};
+
 const sameDay = (first, second) =>
   first.getFullYear() === second.getFullYear() &&
   first.getMonth() === second.getMonth() &&
   first.getDate() === second.getDate();
 
+const getDoctorId = (doctor) => doctor?.doctor_id ?? doctor?.id;
+
 const getDoctorName = (doctor) =>
-  doctor?.doctor_name || doctor?.name || `Врач #${doctor?.id ?? ""}`;
+  doctor?.doctor_name || doctor?.name || `Врач #${getDoctorId(doctor) ?? ""}`;
 
 const formatDate = (date) =>
   date.toLocaleDateString("ru-RU", {
@@ -47,11 +41,49 @@ const formatDate = (date) =>
     year: "numeric",
   });
 
+const toDateInputValue = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getViewRange = (date, view) => {
+  let start;
+  let end;
+
+  if (view === "day") {
+    start = startOfDay(date);
+    end = start;
+  } else if (view === "week") {
+    start = startOfWeek(date);
+    end = new Date(start);
+    end.setDate(end.getDate() + 6);
+  } else {
+    start = new Date(date.getFullYear(), date.getMonth(), 1);
+    end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  }
+
+  return {
+    start: toDateInputValue(start),
+    end: toDateInputValue(end),
+  };
+};
+
+const getEventMinutes = (date) => date.getHours() * 60 + date.getMinutes();
+
+const formatTime = (date) =>
+  date.toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
 export const Schedule = () => {
   const currentUser = useMemo(() => getStoredUser(), []);
 
   const isDoctor = currentUser?.role === "DOCTOR";
   const isAdmin = currentUser?.role === "ADMIN";
+  const canManageSchedule = isAdmin || currentUser?.role === "REGISTRAR";
 
   const currentDoctorId = currentUser?.doctor_id ?? currentUser?.id;
 
@@ -71,23 +103,11 @@ export const Schedule = () => {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
 
-  const [activeFilter, setActiveFilter] = useState("all");
   const [calendarView, setCalendarView] = useState("week");
 
-  const [calendarApi, setCalendarApi] = useState(null);
-
-  const [editorState, setEditorState] = useState({
-    open: false,
-    event: null,
-  });
-
-  const [contextMenuState, setContextMenuState] = useState({
-    open: false,
-    event: null,
-    point: null,
-  });
-
   const [createScheduleOpen, setCreateScheduleOpen] = useState(false);
+  const [createAppointmentOpen, setCreateAppointmentOpen] = useState(false);
+  const [selectedDayModal, setSelectedDayModal] = useState(null);
 
   const monthName = displayedMonth.toLocaleDateString("ru-RU", {
     month: "long",
@@ -132,7 +152,7 @@ export const Schedule = () => {
   }, [displayedMonth]);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (isDoctor) return;
 
     let cancelled = false;
 
@@ -148,12 +168,14 @@ export const Schedule = () => {
         setSelectedDoctorId((previous) => {
           if (
             previous &&
-            list.some((doctor) => String(doctor.id) === String(previous))
+            list.some(
+              (doctor) => String(getDoctorId(doctor)) === String(previous),
+            )
           ) {
             return previous;
           }
 
-          return list.length ? String(list[0].id) : "";
+          return "";
         });
       } catch (err) {
         if (!cancelled) {
@@ -169,12 +191,17 @@ export const Schedule = () => {
     return () => {
       cancelled = true;
     };
-  }, [isAdmin]);
+  }, [isDoctor]);
 
   const loadSchedule = useCallback(async () => {
     const targetDoctorId = isDoctor ? currentDoctorId : selectedDoctorId;
 
-    if (!targetDoctorId) {
+    if (isDoctor && !targetDoctorId) {
+      setEvents([]);
+      return;
+    }
+
+    if (!isDoctor && !targetDoctorId && doctors.length === 0) {
       setEvents([]);
       return;
     }
@@ -183,25 +210,45 @@ export const Schedule = () => {
     setError("");
 
     try {
-      const response = await api.get(
-        `/schedule/?doctor_id=${encodeURIComponent(targetDoctorId)}`,
-      );
+      const range = getViewRange(selectedDate, calendarView);
+      const response = await api.get("/schedule/", {
+        params: {
+          ...(targetDoctorId ? { doctor_id: targetDoctorId } : {}),
+          ...range,
+        },
+      });
 
       const schedule = Array.isArray(response.data) ? response.data : [];
 
       const formattedEvents = schedule
-        .map((item) => ({
-          id: item.id,
-          text: `Пациент: ${item.patient_name || "Не указан"} (${
-            item.procedure || "Прием"
-          })`,
-          start: new Date(item.start_time),
-          end: new Date(item.end_time),
-          doctorId: Number(item.doctor ?? item.doctor_id ?? targetDoctorId),
-          patient_id: item.patient_id,
-          procedure: item.procedure,
-          patient_name: item.patient_name,
-        }))
+        .map((item) => {
+          const type = item.type || "appointment";
+          const doctorId = Number(
+            item.doctor ?? item.doctor_id ?? targetDoctorId,
+          );
+          const doctor = doctors.find(
+            (candidate) => Number(getDoctorId(candidate)) === doctorId,
+          );
+          return {
+            id: `${type}-${item.id}`,
+            type,
+            text:
+              type === "shift"
+                ? item.title || "Рабочее время врача"
+                : item.title ||
+                  `Пациент: ${item.patient_name || "Не указан"} (${
+                    item.procedure || "Прием"
+                  })`,
+            start: new Date(item.start ?? item.start_time),
+            end: new Date(item.end ?? item.end_time),
+            doctorId,
+            doctorName: item.doctor_name || getDoctorName(doctor),
+            patient_id: item.patient_id,
+            procedure: item.procedure,
+            patient_name: item.patient_name,
+            status: item.status,
+          };
+        })
         .filter(
           (item) =>
             !Number.isNaN(item.start.getTime()) &&
@@ -219,20 +266,29 @@ export const Schedule = () => {
     } finally {
       setLoading(false);
     }
-  }, [isDoctor, currentDoctorId, selectedDoctorId]);
+  }, [
+    isDoctor,
+    currentDoctorId,
+    selectedDoctorId,
+    selectedDate,
+    calendarView,
+    doctors,
+  ]);
 
   useEffect(() => {
     loadSchedule();
   }, [loadSchedule]);
 
   useEffect(() => {
-    if (!calendarApi) return;
+    if (!selectedDayModal) return undefined;
 
-    calendarApi.exec("navigate-to", {
-      date: selectedDate,
-      view: calendarView,
-    });
-  }, [calendarApi, selectedDate, calendarView]);
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setSelectedDayModal(null);
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedDayModal]);
 
   const visibleEvents = useMemo(() => {
     if (isDoctor) {
@@ -241,180 +297,227 @@ export const Schedule = () => {
       );
     }
 
-    if (!selectedDoctorId) return [];
-
+    if (!selectedDoctorId) return events;
     return events.filter(
       (event) => Number(event.doctorId) === Number(selectedDoctorId),
     );
   }, [events, isDoctor, currentDoctorId, selectedDoctorId]);
 
-  const filteredEvents = useMemo(
-    () => (activeFilter === "all" ? visibleEvents : []),
-    [visibleEvents, activeFilter],
-  );
-
-  const selectedDayEvents = useMemo(
-    () =>
-      visibleEvents.filter((event) =>
-        sameDay(new Date(event.start), selectedDate),
-      ),
-    [visibleEvents, selectedDate],
-  );
-
-  const bookedCount = selectedDayEvents.length;
-
-  const freeCount = Math.max(0, 12 - bookedCount);
-
   const selectedDoctor = doctors.find(
-    (doctor) => Number(doctor.id) === Number(selectedDoctorId),
+    (doctor) => Number(getDoctorId(doctor)) === Number(selectedDoctorId),
   );
 
   const selectedDoctorName = isDoctor
     ? currentUser?.doctor_name || currentUser?.name || "Мое расписание"
     : selectedDoctor
       ? getDoctorName(selectedDoctor)
-      : "Выберите врача";
+      : "Все врачи";
 
-  const selectMiniDate = (date) => {
-    setSelectedDate(new Date(date));
-    setDisplayedMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+  const selectDate = (date) => {
+    const selected = startOfDay(date);
+    setSelectedDate(selected);
+    setDisplayedMonth(new Date(selected.getFullYear(), selected.getMonth(), 1));
   };
 
   const changeMonth = (offset) => {
-    setDisplayedMonth(
-      (month) => new Date(month.getFullYear(), month.getMonth() + offset, 1),
+    const nextMonth = new Date(
+      displayedMonth.getFullYear(),
+      displayedMonth.getMonth() + offset,
+      1,
     );
+    setDisplayedMonth(nextMonth);
+    if (calendarView === "month") {
+      const selectedDay = Math.min(
+        selectedDate.getDate(),
+        new Date(
+          nextMonth.getFullYear(),
+          nextMonth.getMonth() + 1,
+          0,
+        ).getDate(),
+      );
+      selectDate(
+        new Date(nextMonth.getFullYear(), nextMonth.getMonth(), selectedDay),
+      );
+    }
   };
 
   const goToToday = () => {
-    const now = new Date();
-    setSelectedDate(now);
-    setDisplayedMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+    selectDate(new Date());
   };
 
-  const openNewAppointment = (date = selectedDate) => {
-    const start = new Date(date);
-    const end = new Date(start.getTime() + 15 * 60 * 1000);
+  const navigatePeriod = (offset) => {
+    const nextDate = new Date(selectedDate);
 
-    setEditorState({
-      open: true,
-      event: {
-        start,
-        end,
-        text: "",
-      },
-    });
-  };
-
-  const handleEventClick = (eventObj) => {
-    setEditorState({
-      open: true,
-      event: eventObj,
-    });
-  };
-
-  const handleCellClick = (date) => {
-    const start = new Date(date);
-
-    setSelectedDate(start);
-    setDisplayedMonth(new Date(start.getFullYear(), start.getMonth(), 1));
-
-    openNewAppointment(start);
-  };
-
-  const handleContextMenu = (event, eventObj) => {
-    if (event?.preventDefault) event.preventDefault();
-
-    setContextMenuState({
-      open: true,
-      event: eventObj,
-      point: {
-        x: event?.clientX ?? 0,
-        y: event?.clientY ?? 0,
-      },
-    });
-  };
-
-  const closeEditor = () => {
-    setEditorState({ open: false, event: null });
-  };
-
-  const closeContextMenu = () => {
-    setContextMenuState({
-      open: false,
-      event: null,
-      point: null,
-    });
-  };
-
-  const editFromContextMenu = () => {
-    if (!contextMenuState.event) return;
-
-    setEditorState({
-      open: true,
-      event: contextMenuState.event,
-    });
-
-    closeContextMenu();
-  };
-
-  const handleSaveEvent = async (updatedEvent) => {
-    const targetDoctorId = isDoctor ? currentDoctorId : selectedDoctorId;
-
-    const patientId = Number(updatedEvent.patient_id || updatedEvent.text);
-
-    if (!targetDoctorId) {
-      alert("Не выбран врач.");
-      return;
+    if (calendarView === "day") {
+      nextDate.setDate(nextDate.getDate() + offset);
+    } else if (calendarView === "week") {
+      nextDate.setDate(nextDate.getDate() + offset * 7);
+    } else {
+      const day = nextDate.getDate();
+      nextDate.setDate(1);
+      nextDate.setMonth(nextDate.getMonth() + offset);
+      const lastDay = new Date(
+        nextDate.getFullYear(),
+        nextDate.getMonth() + 1,
+        0,
+      ).getDate();
+      nextDate.setDate(Math.min(day, lastDay));
     }
 
-    if (!patientId) {
-      alert("Не удалось определить пациента. Укажите ID пациента.");
-      return;
-    }
+    selectDate(nextDate);
+  };
 
-    const start = new Date(updatedEvent.start);
+  const weekDays = useMemo(() => {
+    const monday = startOfWeek(selectedDate);
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + index);
+      return date;
+    });
+  }, [selectedDate]);
 
-    if (Number.isNaN(start.getTime())) {
-      alert("Указана некорректная дата записи.");
-      return;
-    }
+  const eventsForDate = useCallback(
+    (date) =>
+      visibleEvents
+        .filter((event) => sameDay(event.start, date))
+        .sort((first, second) => first.start - second.start),
+    [visibleEvents],
+  );
 
-    const payload = {
-      doctor_id: Number(targetDoctorId),
-      patient_id: patientId,
-      appointment_date: start.toISOString(),
+  const openDayDetails = (date) => {
+    selectDate(date);
+    setSelectedDayModal(startOfDay(date));
+  };
+
+  const timelineBounds = useMemo(() => {
+    const dates = calendarView === "day" ? [selectedDate] : weekDays;
+    const periodEvents = dates.flatMap(eventsForDate);
+    const startMinute = periodEvents.length
+      ? Math.min(...periodEvents.map((event) => getEventMinutes(event.start)))
+      : 8 * 60;
+    const endMinute = periodEvents.length
+      ? Math.max(
+          ...periodEvents.map(
+            (event) =>
+              getEventMinutes(event.start) +
+              (event.end.getTime() - event.start.getTime()) / 60000,
+          ),
+        )
+      : 20 * 60;
+    const startHour = Math.max(0, Math.floor(startMinute / 60) - 1);
+    const endHour = Math.min(24, Math.ceil(endMinute / 60) + 1);
+
+    return {
+      startHour: Math.min(startHour, 8),
+      endHour: Math.max(endHour, 20),
     };
+  }, [calendarView, selectedDate, weekDays, eventsForDate]);
 
-    try {
-      if (updatedEvent.id) {
-        await api.post(`/appointments/${updatedEvent.id}/cancel/`, {
-          status: "CANCELLED",
-        });
-      }
+  const renderTimelineDay = (date, compact = false) => {
+    const dayEvents = eventsForDate(date);
+    const duration = timelineBounds.endHour - timelineBounds.startHour;
+    const hourHeight = compact ? 48 : 64;
+    const positionedEvents = dayEvents.map((event) => {
+      const top =
+        ((getEventMinutes(event.start) - timelineBounds.startHour * 60) / 60) *
+        hourHeight;
+      const minutes = Math.max(
+        15,
+        (event.end.getTime() - event.start.getTime()) / 60000,
+      );
 
-      await api.post("/schedule/book/", payload);
+      return {
+        event,
+        top,
+        height: Math.max(24, (minutes / 60) * hourHeight),
+      };
+    });
 
-      closeEditor();
-      await loadSchedule();
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.error ||
-        err.response?.data?.detail ||
-        (err.response?.data ? JSON.stringify(err.response.data) : null) ||
-        "Ошибка при сохранении записи.";
-
-      alert(`Не удалось сохранить запись: ${errorMessage}`);
-    }
+    return (
+      <div
+        className={`schedule__timeline ${
+          compact ? "schedule__timeline--compact" : ""
+        }`}
+        style={{ height: `${duration * hourHeight}px` }}
+      >
+        {Array.from({ length: duration + 1 }, (_, index) => (
+          <div
+            className="schedule__timeline-hour"
+            key={timelineBounds.startHour + index}
+            style={{ top: `${index * hourHeight}px` }}
+          >
+            <time>
+              {String(timelineBounds.startHour + index).padStart(2, "0")}:00
+            </time>
+          </div>
+        ))}
+        {positionedEvents
+          .filter(({ event }) => event.type === "shift")
+          .map(({ event, top, height }, index) => (
+            <div
+              className="schedule__timeline-shift"
+              key={event.id}
+              style={{
+                top: `${top}px`,
+                height: `${height}px`,
+                left: `${4 + (index % 3) * 3}%`,
+                width: `${92 - (index % 3) * 3}%`,
+              }}
+              title={`${event.doctorName}: ${formatTime(event.start)}–${formatTime(
+                event.end,
+              )}`}
+            >
+              <strong>{event.doctorName}</strong>
+              <span>
+                {formatTime(event.start)}–{formatTime(event.end)} · рабочее
+                время
+              </span>
+            </div>
+          ))}
+        {positionedEvents
+          .filter(({ event }) => event.type === "appointment")
+          .map(({ event, top, height }, index) => (
+            <article
+              className={`schedule__timeline-appointment ${
+                event.status === "CANCELLED" ? "is-cancelled" : ""
+              }`}
+              key={event.id}
+              style={{
+                top: `${top}px`,
+                height: `${Math.max(28, height)}px`,
+                left: `${8 + (index % 3) * 5}%`,
+                width: `${82 - (index % 3) * 5}%`,
+              }}
+              title={`${event.doctorName}: ${event.text}`}
+            >
+              <time>{formatTime(event.start)}</time>
+              <strong>{event.doctorName}</strong>
+              <span>
+                {event.patient_name || event.procedure || event.text}
+              </span>
+            </article>
+          ))}
+        {!dayEvents.length && (
+          <span className="schedule__timeline-empty">
+            Нет записей и графика
+          </span>
+        )}
+      </div>
+    );
   };
 
-  const calendarMenuItems = [
-    {
-      id: "edit",
-      text: "Редактировать",
-      action: editFromContextMenu,
-    },
-  ];
+  const bookingDoctors = isDoctor
+    ? [
+        {
+          doctor_id: currentDoctorId,
+          doctor_name: currentUser?.doctor_name || currentUser?.name,
+        },
+      ]
+    : doctors;
+
+  const selectedDoctorForBooking = isDoctor
+    ? currentDoctorId
+    : selectedDoctorId;
 
   return (
     <div className="schedule__container">
@@ -424,14 +527,6 @@ export const Schedule = () => {
             <div className="schedule__sidebar-label">РАСПИСАНИЕ</div>
             <div className="schedule__sidebar-title">Приемы</div>
           </div>
-
-          <button
-            type="button"
-            className="schedule__sidebar-add btn--prime"
-            onClick={() => openNewAppointment()}
-          >
-            +
-          </button>
         </div>
 
         <section className="schedule__mini-calendar">
@@ -480,7 +575,7 @@ export const Schedule = () => {
                   .join(" ")}
                 aria-label={formatDate(item.date)}
                 aria-pressed={sameDay(item.date, selectedDate)}
-                onClick={() => selectMiniDate(item.date)}
+                onClick={() => selectDate(item.date)}
               >
                 {item.date.getDate()}
               </button>
@@ -501,22 +596,28 @@ export const Schedule = () => {
 
         {!isDoctor && (
           <section className="schedule__sidebar-section">
-            <div className="schedule__section-label">Врач</div>
+            <label
+              className="schedule__section-label"
+              htmlFor="schedule-doctor"
+            >
+              Врач
+            </label>
 
             <select
+              id="schedule-doctor"
               className="schedule__doctor-select"
               value={selectedDoctorId}
-              onChange={(event) => {
-                setSelectedDoctorId(event.target.value);
-                setActiveFilter("all");
-              }}
+              onChange={(event) => setSelectedDoctorId(event.target.value)}
               disabled={loading || doctors.length === 0}
             >
+              <option value="">Все врачи</option>
               {doctors.length === 0 ? (
-                <option value="">Врачи не найдены</option>
+                <option value="" disabled>
+                  Врачи не найдены
+                </option>
               ) : (
                 doctors.map((doctor) => (
-                  <option key={doctor.id} value={String(doctor.id)}>
+                  <option key={getDoctorId(doctor)} value={getDoctorId(doctor)}>
                     {getDoctorName(doctor)}
                   </option>
                 ))
@@ -524,54 +625,6 @@ export const Schedule = () => {
             </select>
           </section>
         )}
-
-        <section className="schedule__sidebar-section">
-          <div className="schedule__section-label">Отображение</div>
-
-          <button
-            type="button"
-            className={`schedule__filter-button ${
-              activeFilter === "all" ? "is-active" : ""
-            }`}
-            aria-pressed={activeFilter === "all"}
-            onClick={() => setActiveFilter("all")}
-          >
-            <span className="schedule__filter-dot" />
-            Все записи
-          </button>
-
-          <button
-            type="button"
-            className={`schedule__filter-button ${
-              activeFilter === "free" ? "is-active" : ""
-            }`}
-            aria-pressed={activeFilter === "free"}
-            onClick={() => setActiveFilter("free")}
-          >
-            <span className="schedule__filter-dot is-free" />
-            Свободные окна
-          </button>
-        </section>
-
-        <section className="schedule__stats">
-          <div className="schedule__stat">
-            <span className="schedule__stat-value">{bookedCount}</span>
-            <span className="schedule__stat-label">
-              Записей на{" "}
-              {selectedDate.toLocaleDateString("ru-RU", {
-                day: "numeric",
-                month: "short",
-              })}
-            </span>
-          </div>
-
-          <div className="schedule__stat">
-            <span className="schedule__stat-value">{freeCount}</span>
-            <span className="schedule__stat-label">
-              Ориентировочно свободных окон
-            </span>
-          </div>
-        </section>
       </aside>
 
       <main className="schedule__main">
@@ -580,9 +633,27 @@ export const Schedule = () => {
             <div className="schedule__main-eyebrow">ГРАФИК ПРИЕМА</div>
 
             <h1>{selectedDoctorName}</h1>
+            <div className="schedule__period-label">
+              {calendarView === "month"
+                ? `${currentMonth} ${currentYear}`
+                : calendarView === "week"
+                  ? `${formatDate(weekDays[0])} — ${weekDays[6].toLocaleDateString(
+                      "ru-RU",
+                      { day: "numeric", month: "long", year: "numeric" },
+                    )}`
+                  : formatDate(selectedDate)}
+            </div>
           </div>
 
           <div className="schedule__main-actions">
+            <button
+              type="button"
+              className="schedule__action-button schedule__period-arrow"
+              aria-label="Предыдущий период"
+              onClick={() => navigatePeriod(-1)}
+            >
+              ‹
+            </button>
             <button
               type="button"
               className="schedule__action-button"
@@ -590,41 +661,51 @@ export const Schedule = () => {
             >
               Сегодня
             </button>
-
             <button
               type="button"
-              className="schedule__action-button"
-              aria-pressed={calendarView === "week"}
-              onClick={() => setCalendarView("week")}
+              className="schedule__action-button schedule__period-arrow"
+              aria-label="Следующий период"
+              onClick={() => navigatePeriod(1)}
             >
-              Неделя
+              ›
             </button>
 
+            <div
+              className="schedule__view-switcher"
+              aria-label="Вид расписания"
+            >
+              {[
+                ["day", "День"],
+                ["week", "Неделя"],
+                ["month", "Месяц"],
+              ].map(([view, label]) => (
+                <button
+                  type="button"
+                  key={view}
+                  className={`schedule__action-button ${
+                    calendarView === view ? "is-active" : ""
+                  }`}
+                  aria-pressed={calendarView === view}
+                  onClick={() => setCalendarView(view)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <button
               type="button"
-              className="schedule__action-button"
-              aria-pressed={calendarView === "day"}
-              onClick={() => setCalendarView("day")}
+              className="btn--second"
+              onClick={() => setCreateAppointmentOpen(true)}
             >
-              День
+              + Новая запись
             </button>
-
-            <button
-              type="button"
-              className="schedule__action-button"
-              aria-pressed={calendarView === "month"}
-              onClick={() => setCalendarView("month")}
-            >
-              Месяц
-            </button>
-
-            {isAdmin && (
+            {canManageSchedule && (
               <button
                 type="button"
                 className="schedule__action-button btn--prime"
                 onClick={() => setCreateScheduleOpen(true)}
               >
-                Создать график
+                + График врача
               </button>
             )}
           </div>
@@ -646,53 +727,208 @@ export const Schedule = () => {
         )}
 
         <div className="schedule__calendar-wrapper">
-          <Locale words={ruLocale}>
-            <Calendar
-              init={setCalendarApi}
-              events={filteredEvents}
-              date={selectedDate}
-              view={calendarView}
-              onEventClick={handleEventClick}
-              onCellClick={handleCellClick}
-              onEventContextMenu={handleContextMenu}
-            />
+          {calendarView === "day" && (
+            <section className="schedule__day-view">
+              <h2>{formatDate(selectedDate)}</h2>
+              <div className="schedule__day-timeline">
+                {renderTimelineDay(selectedDate)}
+              </div>
+            </section>
+          )}
 
-            {calendarApi && editorState.open && (
-              <Editor
-                api={calendarApi}
-                event={editorState.event}
-                onSave={handleSaveEvent}
-                onClose={closeEditor}
-              />
-            )}
+          {calendarView === "week" && (
+            <section className="schedule__week-view">
+              {weekDays.map((date) => {
+                return (
+                  <div
+                    className="schedule__week-column"
+                    key={date.toISOString()}
+                  >
+                    <button
+                      type="button"
+                      className={`schedule__column-heading ${
+                        sameDay(date, selectedDate) ? "is-selected" : ""
+                      }`}
+                      onClick={() => selectDate(date)}
+                    >
+                      <span>
+                        {date.toLocaleDateString("ru-RU", { weekday: "short" })}
+                      </span>
+                      <strong>{date.getDate()}</strong>
+                    </button>
+                    <div className="schedule__column-events">
+                      {renderTimelineDay(date, true)}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+          )}
 
-            {calendarApi && contextMenuState.open && (
-              <ContextMenu
-                api={calendarApi}
-                options={calendarMenuItems.map((item) => ({
-                  id: item.id,
-                  text: item.text,
-                }))}
-                onClick={({ action, context }) => {
-                  if (action?.id === "edit") {
-                    setEditorState({
-                      open: true,
-                      event: context || contextMenuState.event,
-                    });
-                  }
-                  closeContextMenu();
-                }}
-              >
-                <div />
-              </ContextMenu>
-            )}
-          </Locale>
+          {calendarView === "month" && (
+            <section className="schedule__month-view">
+              <div className="schedule__month-weekdays">
+                {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
+                  <span key={day}>{day}</span>
+                ))}
+              </div>
+              <div className="schedule__month-grid">
+                {miniCalendarDays.map(({ date, outside }) => {
+                  const dayEvents = eventsForDate(date);
+                  return (
+                    <button
+                      type="button"
+                      key={date.toISOString()}
+                      className={`schedule__month-day ${
+                        outside ? "is-outside" : ""
+                      } ${sameDay(date, selectedDate) ? "is-selected" : ""} ${
+                        sameDay(date, new Date()) ? "is-today" : ""
+                      }`}
+                      aria-label={`${outside ? "Открыть месяц" : "Открыть день"}: ${formatDate(
+                        date,
+                      )}`}
+                      aria-haspopup={outside ? undefined : "dialog"}
+                      onClick={() => {
+                        if (outside) {
+                          selectDate(date);
+                          return;
+                        }
+                        openDayDetails(date);
+                      }}
+                    >
+                      <span className="schedule__month-day-number">
+                        {date.getDate()}
+                      </span>
+                      <span className="schedule__month-events">
+                        {dayEvents.slice(0, 2).map((event) => (
+                          <span
+                            className={`schedule__month-event ${
+                              event.type === "shift"
+                                ? "is-shift"
+                                : "is-appointment"
+                            }`}
+                            key={event.id}
+                          >
+                            {event.type === "shift"
+                              ? `${formatTime(event.start)}–${formatTime(
+                                  event.end,
+                                )} · ${event.doctorName}`
+                              : `${formatTime(event.start)} ${
+                                  event.patient_name ||
+                                  event.procedure ||
+                                  event.text
+                                } · ${event.doctorName}`}
+                          </span>
+                        ))}
+                        {dayEvents.length > 2 && (
+                          <span className="schedule__month-more">
+                            + еще {dayEvents.length - 2}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       </main>
 
-      {isAdmin && createScheduleOpen && (
+      {selectedDayModal && (
+        <div
+          className="schedule__day-modal-overlay"
+          onClick={() => setSelectedDayModal(null)}
+        >
+          <section
+            className="schedule__day-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="schedule-day-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="schedule__day-modal-header">
+              <div>
+                <span>РАСПИСАНИЕ НА ДЕНЬ</span>
+                <h2 id="schedule-day-modal-title">
+                  {formatDate(selectedDayModal)}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="schedule__day-modal-close"
+                aria-label="Закрыть"
+                onClick={() => setSelectedDayModal(null)}
+              >
+                ×
+              </button>
+            </header>
+            <div className="schedule__day-modal-events">
+              <div className="schedule__day-modal-summary">
+                <span>
+                  <strong>
+                    {
+                      eventsForDate(selectedDayModal).filter(
+                        (event) => event.type === "appointment",
+                      ).length
+                    }
+                  </strong>
+                  записей
+                </span>
+                <span>
+                  <strong>
+                    {
+                      eventsForDate(selectedDayModal).filter(
+                        (event) => event.type === "shift",
+                      ).length
+                    }
+                  </strong>
+                  смен
+                </span>
+              </div>
+              <div className="schedule__day-timeline schedule__day-timeline--modal">
+                {renderTimelineDay(selectedDayModal)}
+              </div>
+            </div>
+            <footer className="schedule__day-modal-actions">
+              <button
+                type="button"
+                className="schedule__action-button"
+                onClick={() => setSelectedDayModal(null)}
+              >
+                Закрыть
+              </button>
+              <button
+                type="button"
+                className="schedule__action-button btn--prime"
+                onClick={() => {
+                  setSelectedDayModal(null);
+                  setCreateAppointmentOpen(true);
+                }}
+              >
+                + Новая запись
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
+
+      {createAppointmentOpen && (
+        <BookAppointmentModal
+          doctors={bookingDoctors}
+          user={currentUser}
+          initialDoctorId={selectedDoctorForBooking}
+          initialDate={toDateInputValue(selectedDate)}
+          onClose={() => setCreateAppointmentOpen(false)}
+          onSuccess={loadSchedule}
+        />
+      )}
+
+      {canManageSchedule && createScheduleOpen && (
         <CreateSchedule
           doctors={doctors}
+          initialDoctorId={selectedDoctorId}
+          initialDate={toDateInputValue(selectedDate)}
           onClose={() => setCreateScheduleOpen(false)}
           onSuccess={async () => {
             setCreateScheduleOpen(false);
