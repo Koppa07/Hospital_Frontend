@@ -52,14 +52,15 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/schedule"
             element={
               <ProtectedRoute requireProfile>
                 <Schedule />
               </ProtectedRoute>
             }
-          />
+          /> */}
+          <Route path="/schedule" element={<Schedule />} />
           <Route
             path="/patients"
             element={

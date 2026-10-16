@@ -492,9 +492,7 @@ export const Schedule = () => {
             >
               <time>{formatTime(event.start)}</time>
               <strong>{event.doctorName}</strong>
-              <span>
-                {event.patient_name || event.procedure || event.text}
-              </span>
+              <span>{event.patient_name || event.procedure || event.text}</span>
             </article>
           ))}
         {!dayEvents.length && (
@@ -524,7 +522,7 @@ export const Schedule = () => {
       <aside className="schedule__sidebar">
         <div className="schedule__sidebar-header">
           <div>
-            <div className="schedule__sidebar-label">РАСПИСАНИЕ</div>
+            <div className="schedule__sidebar-label">Расписание</div>
             <div className="schedule__sidebar-title">Приемы</div>
           </div>
         </div>
@@ -630,7 +628,7 @@ export const Schedule = () => {
       <main className="schedule__main">
         <div className="schedule__main-header">
           <div className="schedule__main-title">
-            <div className="schedule__main-eyebrow">ГРАФИК ПРИЕМА</div>
+            <div className="schedule__main-eyebrow">График приема</div>
 
             <h1>{selectedDoctorName}</h1>
             <div className="schedule__period-label">
@@ -656,7 +654,7 @@ export const Schedule = () => {
             </button>
             <button
               type="button"
-              className="schedule__action-button"
+              className="schedule__action-button schedule__action-today"
               onClick={goToToday}
             >
               Сегодня
@@ -694,7 +692,7 @@ export const Schedule = () => {
             </div>
             <button
               type="button"
-              className="btn--second"
+              className={`${isDoctor ? "btn--prime" : "btn--second"}`}
               onClick={() => setCreateAppointmentOpen(true)}
             >
               + Новая запись
@@ -849,7 +847,7 @@ export const Schedule = () => {
           >
             <header className="schedule__day-modal-header">
               <div>
-                <span>РАСПИСАНИЕ НА ДЕНЬ</span>
+                <span>Расписание на день</span>
                 <h2 id="schedule-day-modal-title">
                   {formatDate(selectedDayModal)}
                 </h2>
@@ -893,7 +891,7 @@ export const Schedule = () => {
             <footer className="schedule__day-modal-actions">
               <button
                 type="button"
-                className="schedule__action-button"
+                className="schedule__action-button btn--second"
                 onClick={() => setSelectedDayModal(null)}
               >
                 Закрыть
