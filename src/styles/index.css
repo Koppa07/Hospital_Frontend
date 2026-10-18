@@ -138,7 +138,7 @@ textarea {
   font-size: 16px;
   font-weight: 500;
   color: var(--color-dark-brown);
-  background-color: #ffffff;
+  background-color: #fff;
   border: 2px solid var(--color-cream-light);
   border-radius: var(--radius-md);
   outline: none;

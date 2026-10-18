@@ -1,7 +1,7 @@
 import { USER_INFO } from "../constants";
 import "../styles/History.css";
 import api from "../api";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 function History() {
   const savedUser = localStorage.getItem(USER_INFO);
@@ -20,7 +20,7 @@ function History() {
   const [error, setError] = useState(null);
   const [history, setHistory] = useState([]);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     setError(null);
     try {
       const params = {};
@@ -36,9 +36,9 @@ function History() {
     } catch (err) {
       setError(err.response?.data?.detail || "Не удалось загрузить историю");
     }
-  };
+  }, [filters.patient_id, filters.doctor_id, isAdmin]);
 
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     setError(null);
     try {
       const res = await api.get("/patients/list/");
@@ -48,9 +48,9 @@ function History() {
         err.response?.data?.detail || "Не удалось загрузить список пациентов",
       );
     }
-  };
+  }, []);
 
-  const fetchDoctors = async () => {
+  const fetchDoctors = useCallback(async () => {
     setError(null);
     try {
       const res = await api.get("/doctors/list/");
@@ -60,7 +60,8 @@ function History() {
         err.response?.data?.detail || "Не удалось загрузить список врачей",
       );
     }
-  };
+  }, []);
+
   useEffect(() => {
     if (!isPatient) {
       fetchPatients();
@@ -72,7 +73,7 @@ function History() {
 
   useEffect(() => {
     fetchHistory();
-  }, [filters.patient_id, filters.doctor_id, isAdmin]);
+  }, [fetchHistory]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -143,41 +144,53 @@ function History() {
             history.map((record) => (
               <article
                 className="history-item"
-                key={record.id || record.log_id}
+                key={record.log_id}
               >
                 <div className="history-item__header">
                   <strong className="history-item__date">
-                    {new Date(record.appointment_date).toLocaleString()}
+                    {new Date(record.appointment_date).toLocaleString("ru-RU")}
                   </strong>
-
-                  <span className="history-item__status">{record.status}</span>
                 </div>
 
                 <div className="history-item__meta">
                   {!isPatient && (
                     <p>
                       <strong>Пациент:</strong> {record.patient_name} (Карта №
-                      {record.patient_card})
+                      {record.card_number || record.patient_id})
                     </p>
                   )}
 
                   {!isDoctor && (
                     <p>
                       <strong>Врач:</strong> {record.doctor_name} (
-                      {record.doctor_specialty})
+                      {record.doctor_specialization})
                     </p>
                   )}
                 </div>
 
                 <div className="history-item__content">
                   <p className="history-item__diagnosis">
-                    <strong>Диагноз:</strong> {record.diagnosis || "Не указан"}
+                    <strong>Диагноз:</strong>{" "}
+                    {record.disease_title || "Не указан"}
+                    {record.disease_code && ` (${record.disease_code})`}
                   </p>
 
                   <p className="history-item__recommendations">
                     <strong>Назначения / Рекомендации:</strong>{" "}
-                    {record.recommendations || "Отсутствуют"}
+                    {record.prescription?.recommendations || "Отсутствуют"}
                   </p>
+
+                  {record.prescription?.drugs?.length > 0 && (
+                    <p className="history-item__recommendations">
+                      <strong>Лекарства:</strong>{" "}
+                      {record.prescription.drugs
+                        .map(
+                          (drug) =>
+                            `${drug.drug_title} — ${drug.dosage}`,
+                        )
+                        .join("; ")}
+                    </p>
+                  )}
                 </div>
               </article>
             ))

@@ -532,6 +532,10 @@
   background: var(--color-accent);
   color: #fff;
 }
+.schedule__month-day.is-today.is-selected .schedule__month-day-number {
+  background: var(--color-accent);
+  color: #fff;
+}
 
 .schedule__month-day.is-selected .schedule__month-day-number {
   color: var(--color-accent);

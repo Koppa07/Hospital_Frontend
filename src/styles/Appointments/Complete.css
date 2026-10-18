@@ -1,0 +1,150 @@
+.modal__content.complete-appointment-modal {
+  width: min(calc(100% - 32px), 600px);
+  max-width: 600px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 50px rgba(54, 30, 28, 0.18);
+}
+
+.complete-appointment-modal h3 {
+  margin: 0 0 22px;
+  color: var(--color-deep-teal);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.complete-appointment-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.complete-appointment-modal .form__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.complete-appointment-modal label,
+.complete-appointment-modal legend {
+  color: var(--color-dark-brown);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.complete-appointment-modal .my__input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--color-text-main);
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.complete-appointment-modal textarea.my__input {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.complete-appointment-modal fieldset.form__group {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.complete-appointment-modal legend {
+  padding: 0 8px;
+  color: var(--color-deep-teal);
+  font-size: 1.05rem;
+}
+
+.complete-appointment-modal fieldset > button {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.complete-appointment-modal fieldset ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.complete-appointment-modal fieldset li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-cream-light);
+  border-radius: var(--radius-sm);
+  background-color: #fff;
+  color: var(--color-text-main);
+  line-height: 1.45;
+}
+
+.complete-appointment-modal .appointments__error {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #ffc1ce;
+  border-radius: var(--radius-sm);
+  background-color: #ffebe9;
+  color: #cf222e;
+  line-height: 1.45;
+}
+
+.complete-appointment-modal .modal__actions {
+  margin-top: 2px;
+  padding-top: 18px;
+}
+
+.complete-appointment-modal .modal__actions button,
+.complete-appointment-modal fieldset > button {
+  min-height: 42px;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.complete-appointment-modal button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .modal__content.complete-appointment-modal {
+    width: calc(100% - 24px);
+    max-height: calc(100vh - 24px);
+    padding: 20px;
+  }
+
+  .complete-appointment-modal h3 {
+    font-size: 1.25rem;
+  }
+
+  .complete-appointment-modal fieldset.form__group {
+    padding: 14px;
+  }
+
+  .complete-appointment-modal fieldset li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .complete-appointment-modal .modal__actions {
+    flex-wrap: wrap;
+  }
+}

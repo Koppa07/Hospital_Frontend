@@ -291,17 +291,13 @@ export const Schedule = () => {
   }, [selectedDayModal]);
 
   const visibleEvents = useMemo(() => {
-    if (isDoctor) {
-      return events.filter(
-        (event) => Number(event.doctorId) === Number(currentDoctorId),
-      );
-    }
+    if (isDoctor) return events;
 
     if (!selectedDoctorId) return events;
     return events.filter(
       (event) => Number(event.doctorId) === Number(selectedDoctorId),
     );
-  }, [events, isDoctor, currentDoctorId, selectedDoctorId]);
+  }, [events, isDoctor, selectedDoctorId]);
 
   const selectedDoctor = doctors.find(
     (doctor) => Number(getDoctorId(doctor)) === Number(selectedDoctorId),
