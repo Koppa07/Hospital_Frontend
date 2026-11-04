@@ -59,7 +59,8 @@ function AppointmentCard({ app, onCancel, onComplete, user }) {
             </p>
 
             <p>
-              <strong>Специализация:</strong> {app.specialization || "Терапевт"}
+              <strong>Специализация:</strong>{" "}
+              {app.doctor_specialization || app.specialization || "—"}
             </p>
 
             <p>

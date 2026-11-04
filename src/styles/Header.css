@@ -111,6 +111,7 @@
   align-items: flex-end;
   justify-content: center;
 
+  margin-left: auto;
   padding: 0 24px;
 
   box-sizing: border-box;
@@ -149,6 +150,4 @@
   font-size: 15px;
   font-weight: 500;
   line-height: 1.2;
-
-  text-transform: lowercase;
 }

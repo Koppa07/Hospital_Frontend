@@ -60,7 +60,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* <Route path="/schedule" element={<Schedule />} /> */}
           <Route
             path="/patients"
             element={
@@ -104,7 +103,7 @@ function App() {
             }
           />
           <Route
-            path="/drug"
+            path="/drugs"
             element={
               <ProtectedRoute requireProfile>
                 <Drug />

@@ -7,6 +7,7 @@ function BookAppointmentModal({
   onClose,
   onSuccess,
   user,
+  patientProfile,
   initialDoctorId = "",
   initialDate = "",
 }) {
@@ -17,7 +18,10 @@ function BookAppointmentModal({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [loadedPatientProfile, setLoadedPatientProfile] = useState(null);
 
+  const [availableDates, setAvailableDates] = useState([]);
+  const [loadingDates, setLoadingDates] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState("");
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -28,14 +32,43 @@ function BookAppointmentModal({
   const dropdownRef = useRef(null);
 
   const isPatient = user?.role === "PATIENT";
+  const currentPatientProfile = patientProfile ?? loadedPatientProfile;
+  const patientId =
+    currentPatientProfile?.card_number ??
+    currentPatientProfile?.patient_id ??
+    user?.card_number ??
+    user?.patient_id;
+  const patientName = currentPatientProfile?.patient_name ?? user?.patient_name;
+  const bookingPatient = isPatient
+    ? patientId == null
+      ? null
+      : { id: patientId, name: patientName }
+    : selectedPatient;
+
   useEffect(() => {
-    if (isPatient && user?.patient_id) {
-      setSelectedPatient({
-        id: user.patient_id,
-        name: user.patient_name,
-      });
-    }
-  }, [isPatient, user]);
+    if (!isPatient || patientProfile || patientId != null) return;
+
+    let isActive = true;
+    const fetchPatientProfile = async () => {
+      try {
+        const res = await api.get("/patient/profile/");
+        if (isActive) setLoadedPatientProfile(res.data);
+      } catch (err) {
+        if (!isActive) return;
+        console.error("Ошибка при загрузке профиля пациента:", err);
+        setError(
+          err.response?.data?.detail ||
+            "Не удалось загрузить профиль пациента для записи",
+        );
+      }
+    };
+
+    fetchPatientProfile();
+    return () => {
+      isActive = false;
+    };
+  }, [isPatient, patientProfile, patientId]);
+
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -60,12 +93,43 @@ function BookAppointmentModal({
   }, []);
 
   useEffect(() => {
-    if (!doctorId || !date) {
-      setAvailableSlots([]);
-      setSelectedSlot("");
-      return;
-    }
+    if (!doctorId) return;
 
+    let isActive = true;
+    const fetchAvailableDates = async () => {
+      setLoadingDates(true);
+      setError(null);
+      try {
+        const res = await api.get("/schedule/available-dates/", {
+          params: { doctor_id: doctorId },
+        });
+        if (!isActive) return;
+
+        setAvailableDates(res.data);
+        setDate(
+          res.data.includes(initialDate) ? initialDate : (res.data[0] ?? ""),
+        );
+      } catch (err) {
+        if (!isActive) return;
+        console.error("Ошибка при загрузке доступных дат:", err);
+        setError(
+          err.response?.data?.detail || "Не удалось загрузить доступные даты",
+        );
+      } finally {
+        if (isActive) setLoadingDates(false);
+      }
+    };
+
+    fetchAvailableDates();
+    return () => {
+      isActive = false;
+    };
+  }, [doctorId, initialDate]);
+
+  useEffect(() => {
+    if (!doctorId || !date) return;
+
+    let isActive = true;
     const fetchSlots = async () => {
       setLoadingSlots(true);
       setError(null);
@@ -73,17 +137,23 @@ function BookAppointmentModal({
         const res = await api.get("/schedule/slots/", {
           params: { doctor_id: doctorId, date: date },
         });
-        setAvailableSlots(res.data);
+        if (isActive) setAvailableSlots(res.data);
       } catch (err) {
-        setError(
-          err.response?.data?.detail || "Не удалось загрузить доступные слоты",
-        );
+        if (isActive) {
+          setError(
+            err.response?.data?.detail ||
+              "Не удалось загрузить доступные слоты",
+          );
+        }
       } finally {
-        setLoadingSlots(false);
+        if (isActive) setLoadingSlots(false);
       }
     };
 
     fetchSlots();
+    return () => {
+      isActive = false;
+    };
   }, [doctorId, date]);
 
   const filteredPatients = patients.filter((patient) => {
@@ -94,7 +164,7 @@ function BookAppointmentModal({
   const handleSelectPatient = (patient) => {
     const fullName = patient.patient_name || patient.name;
     setSelectedPatient({
-      id: patient.patient_id || patient.card_number,
+      id: patient.card_number || patient.patient_id,
       name: patient.patient_name,
     });
     setSearchTerm(fullName);
@@ -110,8 +180,12 @@ function BookAppointmentModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isPatient && !selectedPatient?.id) {
-      setError("Выберите пациента");
+    if (!bookingPatient?.id) {
+      setError(
+        isPatient
+          ? "Не удалось определить профиль пациента. Обновите профиль и попробуйте снова."
+          : "Выберите пациента",
+      );
       return;
     }
 
@@ -127,11 +201,8 @@ function BookAppointmentModal({
       const payload = {
         doctor_id: Number(doctorId),
         slot_id: Number(selectedSlot),
-        patient_id: Number(selectedPatient.id),
+        patient_id: Number(bookingPatient.id),
       };
-      if (!isPatient) {
-        payload.patient_id = Number(selectedPatient.id);
-      }
 
       await api.post("/schedule/book/", payload);
 
@@ -166,7 +237,16 @@ function BookAppointmentModal({
             <select
               required
               value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
+              onChange={(e) => {
+                const nextDoctorId = e.target.value;
+                setDoctorId(nextDoctorId);
+                setDate("");
+                setAvailableDates([]);
+                setAvailableSlots([]);
+                setSelectedSlot("");
+                setLoadingDates(Boolean(nextDoctorId));
+                setLoadingSlots(false);
+              }}
               className="my__input"
             >
               <option value="">-- Выберите врача --</option>
@@ -174,7 +254,8 @@ function BookAppointmentModal({
                 const id = doc.doctor_id ?? doc.id;
                 return (
                   <option key={id} value={id}>
-                    {doc.doctor_name || doc.name || `Врач #${id}`}
+                    {doc.doctor_name || `Врач #${id}`} -{" "}
+                    {doc.spec_title || "Специализация не указана"}
                   </option>
                 );
               })}
@@ -188,7 +269,7 @@ function BookAppointmentModal({
               style={{ position: "relative" }}
             >
               <label>Пациент (ФИО):</label>
-              <div style={{ display: "flex", gap: "5px" }}>
+              <div>
                 <input
                   type="text"
                   required
@@ -202,15 +283,6 @@ function BookAppointmentModal({
                   onFocus={() => setIsDropdownOpen(true)}
                   className="my__input"
                 />
-                {selectedPatient && (
-                  <button
-                    type="button"
-                    onClick={handleClearPatient}
-                    className="btn--second"
-                  >
-                    ✕
-                  </button>
-                )}
               </div>
 
               {isDropdownOpen && !selectedPatient && (
@@ -220,7 +292,7 @@ function BookAppointmentModal({
                       const fullName = patient.patient_name || patient.name;
                       return (
                         <li
-                          key={patient.patient_id}
+                          key={patient.patient_id || patient.card_number}
                           onClick={() => handleSelectPatient(patient)}
                           className="autocomplete__item"
                         >
@@ -241,13 +313,43 @@ function BookAppointmentModal({
 
           <div className="form__group">
             <label>Дата приёма:</label>
-            <input
-              type="date"
+            <select
               required
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              disabled={
+                !doctorId || loadingDates || availableDates.length === 0
+              }
+              onChange={(e) => {
+                setDate(e.target.value);
+                setAvailableSlots([]);
+                setSelectedSlot("");
+                setLoadingSlots(false);
+              }}
               className="my__input"
-            />
+            >
+              <option value="">
+                {loadingDates
+                  ? "Загрузка доступных дат..."
+                  : !doctorId
+                    ? "-- Сначала выберите врача --"
+                    : availableDates.length === 0
+                      ? "Нет доступных дат"
+                      : "-- Выберите дату --"}
+              </option>
+              {availableDates.map((availableDate) => (
+                <option key={availableDate} value={availableDate}>
+                  {new Date(`${availableDate}T00:00:00`).toLocaleDateString(
+                    "ru-RU",
+                    {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    },
+                  )}
+                </option>
+              ))}
+            </select>
           </div>
 
           {doctorId && date && (
@@ -298,11 +400,7 @@ function BookAppointmentModal({
             <button
               type="submit"
               className="btn--prime"
-              disabled={
-                isSubmitting ||
-                !selectedSlot ||
-                (!isPatient && !selectedPatient)
-              }
+              disabled={isSubmitting || !selectedSlot || !bookingPatient?.id}
             >
               {isSubmitting
                 ? "Запись..."

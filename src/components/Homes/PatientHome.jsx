@@ -129,7 +129,7 @@ function PatientHome() {
       <div className="home__welcome">
         <h1>
           Добро пожаловать,{" "}
-          {profile?.name || user?.full_name || user?.username || "Пациент"}!
+          {profile?.patient_name || user?.username || "Пациент"}!
         </h1>
         <p className="home__subtitle">Личный кабинет пациента</p>
       </div>
@@ -248,6 +248,7 @@ function PatientHome() {
           onClose={() => setModalType(null)}
           onSuccess={handleBookingSuccess}
           user={user}
+          patientProfile={profile}
         />
       )}
 

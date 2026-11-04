@@ -70,13 +70,26 @@ const getViewRange = (date, view) => {
   };
 };
 
-const getEventMinutes = (date) => date.getHours() * 60 + date.getMinutes();
-
 const formatTime = (date) =>
   date.toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",
   });
+
+const getMonthPreviewEvents = (dayEvents) => {
+  const orderedEvents = [...dayEvents].sort(
+    (first, second) => first.start - second.start,
+  );
+  const previewEvents = ["shift", "appointment"]
+    .map((type) => orderedEvents.find((event) => event.type === type))
+    .filter(Boolean);
+  const includedIds = new Set(previewEvents.map((event) => event.id));
+
+  return [
+    ...previewEvents,
+    ...orderedEvents.filter((event) => !includedIds.has(event.id)),
+  ].slice(0, 3);
+};
 
 export const Schedule = () => {
   const currentUser = useMemo(() => getStoredUser(), []);
@@ -385,116 +398,50 @@ export const Schedule = () => {
     setSelectedDayModal(startOfDay(date));
   };
 
-  const timelineBounds = useMemo(() => {
-    const dates = calendarView === "day" ? [selectedDate] : weekDays;
-    const periodEvents = dates.flatMap(eventsForDate);
-    const startMinute = periodEvents.length
-      ? Math.min(...periodEvents.map((event) => getEventMinutes(event.start)))
-      : 8 * 60;
-    const endMinute = periodEvents.length
-      ? Math.max(
-          ...periodEvents.map(
-            (event) =>
-              getEventMinutes(event.start) +
-              (event.end.getTime() - event.start.getTime()) / 60000,
-          ),
-        )
-      : 20 * 60;
-    const startHour = Math.max(0, Math.floor(startMinute / 60) - 1);
-    const endHour = Math.min(24, Math.ceil(endMinute / 60) + 1);
-
-    return {
-      startHour: Math.min(startHour, 8),
-      endHour: Math.max(endHour, 20),
-    };
-  }, [calendarView, selectedDate, weekDays, eventsForDate]);
-
-  const renderTimelineDay = (date, compact = false) => {
+  const renderDayEvents = (date, compact = false) => {
     const dayEvents = eventsForDate(date);
-    const duration = timelineBounds.endHour - timelineBounds.startHour;
-    const hourHeight = compact ? 48 : 64;
-    const positionedEvents = dayEvents.map((event) => {
-      const top =
-        ((getEventMinutes(event.start) - timelineBounds.startHour * 60) / 60) *
-        hourHeight;
-      const minutes = Math.max(
-        15,
-        (event.end.getTime() - event.start.getTime()) / 60000,
-      );
-
-      return {
-        event,
-        top,
-        height: Math.max(24, (minutes / 60) * hourHeight),
-      };
-    });
 
     return (
       <div
-        className={`schedule__timeline ${
-          compact ? "schedule__timeline--compact" : ""
+        className={`schedule__event-list ${
+          compact ? "schedule__event-list--compact" : ""
         }`}
-        style={{ height: `${duration * hourHeight}px` }}
       >
-        {Array.from({ length: duration + 1 }, (_, index) => (
-          <div
-            className="schedule__timeline-hour"
-            key={timelineBounds.startHour + index}
-            style={{ top: `${index * hourHeight}px` }}
+        {dayEvents.map((event) => (
+          <article
+            className={`schedule__event-card ${
+              event.type === "shift"
+                ? "schedule__event-card--shift"
+                : "schedule__event-card--appointment"
+            } ${event.status === "CANCELLED" ? "is-cancelled" : ""}`}
+            key={event.id}
           >
             <time>
-              {String(timelineBounds.startHour + index).padStart(2, "0")}:00
+              {formatTime(event.start)}
+              {event.type === "shift" && ` — ${formatTime(event.end)}`}
             </time>
-          </div>
-        ))}
-        {positionedEvents
-          .filter(({ event }) => event.type === "shift")
-          .map(({ event, top, height }, index) => (
-            <div
-              className="schedule__timeline-shift"
-              key={event.id}
-              style={{
-                top: `${top}px`,
-                height: `${height}px`,
-                left: `${4 + (index % 3) * 3}%`,
-                width: `${92 - (index % 3) * 3}%`,
-              }}
-              title={`${event.doctorName}: ${formatTime(event.start)}–${formatTime(
-                event.end,
-              )}`}
-            >
-              <strong>{event.doctorName}</strong>
+            <div className="schedule__event-card-content">
+              <strong>
+                {event.type === "shift"
+                  ? "Рабочее время"
+                  : event.patient_name ||
+                    event.procedure ||
+                    event.text ||
+                    "Приём"}
+              </strong>
               <span>
-                {formatTime(event.start)}–{formatTime(event.end)} · рабочее
-                время
+                {event.type === "shift"
+                  ? event.doctorName
+                  : `${event.doctorName}${event.procedure ? ` · ${event.procedure}` : ""}`}
               </span>
             </div>
-          ))}
-        {positionedEvents
-          .filter(({ event }) => event.type === "appointment")
-          .map(({ event, top, height }, index) => (
-            <article
-              className={`schedule__timeline-appointment ${
-                event.status === "CANCELLED" ? "is-cancelled" : ""
-              }`}
-              key={event.id}
-              style={{
-                top: `${top}px`,
-                height: `${Math.max(28, height)}px`,
-                left: `${8 + (index % 3) * 5}%`,
-                width: `${82 - (index % 3) * 5}%`,
-              }}
-              title={`${event.doctorName}: ${event.text}`}
-            >
-              <time>{formatTime(event.start)}</time>
-              <strong>{event.doctorName}</strong>
-              <span>{event.patient_name || event.procedure || event.text}</span>
-            </article>
-          ))}
+            <span className="schedule__event-card-type">
+              {event.type === "shift" ? "Смена" : "Запись"}
+            </span>
+          </article>
+        ))}
         {!dayEvents.length && (
-          <span className="schedule__timeline-empty">
-            Нет записей и графика
-          </span>
+          <div className="schedule__event-list-empty">На этот день событий нет</div>
         )}
       </div>
     );
@@ -724,8 +671,8 @@ export const Schedule = () => {
           {calendarView === "day" && (
             <section className="schedule__day-view">
               <h2>{formatDate(selectedDate)}</h2>
-              <div className="schedule__day-timeline">
-                {renderTimelineDay(selectedDate)}
+              <div className="schedule__day-events">
+                {renderDayEvents(selectedDate)}
               </div>
             </section>
           )}
@@ -751,7 +698,7 @@ export const Schedule = () => {
                       <strong>{date.getDate()}</strong>
                     </button>
                     <div className="schedule__column-events">
-                      {renderTimelineDay(date, true)}
+                      {renderDayEvents(date, true)}
                     </div>
                   </div>
                 );
@@ -794,7 +741,7 @@ export const Schedule = () => {
                         {date.getDate()}
                       </span>
                       <span className="schedule__month-events">
-                        {dayEvents.slice(0, 2).map((event) => (
+                        {getMonthPreviewEvents(dayEvents).map((event) => (
                           <span
                             className={`schedule__month-event ${
                               event.type === "shift"
@@ -814,9 +761,9 @@ export const Schedule = () => {
                                 } · ${event.doctorName}`}
                           </span>
                         ))}
-                        {dayEvents.length > 2 && (
+                        {dayEvents.length > 3 && (
                           <span className="schedule__month-more">
-                            + еще {dayEvents.length - 2}
+                            + еще {dayEvents.length - 3}
                           </span>
                         )}
                       </span>
@@ -880,8 +827,8 @@ export const Schedule = () => {
                   смен
                 </span>
               </div>
-              <div className="schedule__day-timeline schedule__day-timeline--modal">
-                {renderTimelineDay(selectedDayModal)}
+              <div className="schedule__day-events schedule__day-events--modal">
+                {renderDayEvents(selectedDayModal)}
               </div>
             </div>
             <footer className="schedule__day-modal-actions">
