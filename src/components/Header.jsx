@@ -1,21 +1,12 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../api";
 import { USER_INFO } from "../constants";
 import menuIcon from "../assets/images/Menu.svg";
 
 import "../styles/Header.css";
 
-function Header({ onMenuClick, menuButtonRef }) {
+function Header({ onMenuClick, menuButtonRef, profile }) {
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
-  const [profileName, setProfileName] = useState(
-    user?.doctor_name ||
-      user?.patient_name ||
-      user?.full_name ||
-      user?.name ||
-      "",
-  );
   const roleNames = {
     ADMIN: "Администратор",
     DOCTOR: "Врач",
@@ -23,36 +14,12 @@ function Header({ onMenuClick, menuButtonRef }) {
     REGISTRAR: "Регистратор",
   };
 
-  useEffect(() => {
-    const profileUrl =
-      user?.role === "DOCTOR"
-        ? "/doctor/profile/"
-        : user?.role === "PATIENT"
-          ? "/patient/profile/"
-          : null;
-
-    if (!profileUrl) return;
-
-    let isMounted = true;
-    api
-      .get(profileUrl)
-      .then((response) => {
-        if (isMounted) {
-          setProfileName(
-            response.data.doctor_name || response.data.patient_name || "",
-          );
-        }
-      })
-      .catch((error) => {
-        if (error.response?.status !== 404) {
-          console.error("Ошибка загрузки ФИО пользователя:", error);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.role]);
+  const profileName =
+    user?.role === "PATIENT"
+      ? profile?.patient_name || user?.patient_name || ""
+      : user?.role === "DOCTOR"
+        ? profile?.doctor_name || user?.doctor_name || user?.name || ""
+        : user?.full_name || user?.name || "";
 
   return (
     <header className="header__container">

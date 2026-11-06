@@ -10,33 +10,22 @@ import "../../styles/home.css";
 import AppointmentCard from "../Appointments/AppointmentCard";
 import { useOutletContext } from "react-router-dom";
 function PatientHome() {
-  const { setProfileExists } = useOutletContext();
+  const {
+    profile,
+    setProfile,
+    setProfileExists,
+    profileChecked,
+  } = useOutletContext();
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
 
   const [modalType, setModalType] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [medicalHistory, setMedicalHistory] = useState([]);
   const [selectedApp, setSelectedApp] = useState(null);
   const [error, setError] = useState(null);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const fetchProfile = async () => {
-    try {
-      const res = await api.get(`/patient/profile/`);
-      setProfile(res.data);
-    } catch (err) {
-      if (err.response?.status === 404) {
-        setProfile(null);
-      } else {
-        console.error("Ошибка при получении профиля:", err);
-      }
-    } finally {
-      setIsProfileLoaded(true);
-    }
-  };
 
   useEffect(() => {
     if (!profile) {
@@ -51,7 +40,7 @@ function PatientHome() {
       }
     };
     fetchDoctors();
-  }, []);
+  }, [profile]);
 
   const fetchAppointments = async () => {
     setError(null);
@@ -79,7 +68,7 @@ function PatientHome() {
     }
     fetchAppointments();
     fetchMedicalHistory();
-  }, []);
+  }, [profile]);
 
   const handleBookingSuccess = () => {
     fetchAppointments();
@@ -102,10 +91,6 @@ function PatientHome() {
     const updatedUser = { ...user, name: updatedProfile.name };
     localStorage.setItem(USER_INFO, JSON.stringify(updatedUser));
   };
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
   const renderAppointmentCard = (app) => (
     <AppointmentCard
       key={app.log_id}
@@ -134,7 +119,7 @@ function PatientHome() {
         <p className="home__subtitle">Личный кабинет пациента</p>
       </div>
 
-      {!isProfileLoaded && !profile && (
+      {profileChecked && !profile && (
         <div className="home__warning-banner">
           <p>
             ⚠️ Для записи на прием необходимо сначала заполнить персональные

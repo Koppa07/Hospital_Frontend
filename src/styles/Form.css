@@ -36,6 +36,16 @@
   width: 100%;
 }
 
+.form-group > span {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.form__message {
+  margin: 8px 0 0;
+  color: #b42318;
+}
+
 .form__container .my__input {
   width: 100%;
 }

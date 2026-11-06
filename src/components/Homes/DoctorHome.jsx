@@ -9,30 +9,15 @@ import "../../styles/home.css";
 import AppointmentCard from "../Appointments/AppointmentCard";
 import { useOutletContext } from "react-router-dom";
 function DoctorHome() {
-  const { setProfileExists } = useOutletContext();
+  const { profile, setProfile, setProfileExists, profileChecked } =
+    useOutletContext();
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
   const [modalType, setModalType] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [selectedApp, setSelectedApp] = useState(null);
   const [error, setError] = useState(null);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const fetchProfile = async () => {
-    try {
-      const res = await api.get(`/doctor/profile/`);
-      setProfile(res.data);
-    } catch (err) {
-      if (err.response?.status === 404) {
-        setProfile(null);
-      } else {
-        console.error("Ошибка при получении профиля:", err);
-      }
-    } finally {
-      setIsProfileLoaded(true);
-    }
-  };
   const fetchAppointments = async () => {
     setError(null);
     try {
@@ -48,7 +33,7 @@ function DoctorHome() {
       return;
     }
     fetchAppointments();
-  }, []);
+  }, [profile]);
   const handleStatusUpdate = (appId, newStatus) => {
     setUpcomingAppointments((prev) =>
       prev.map((item) =>
@@ -65,9 +50,6 @@ function DoctorHome() {
     const updatedUser = { ...user, name: updatedProfile.doctor_name };
     localStorage.setItem(USER_INFO, JSON.stringify(updatedUser));
   };
-  useEffect(() => {
-    fetchProfile();
-  }, []);
   const renderAppointmentCard = (app) => (
     <AppointmentCard
       key={app.log_id}
@@ -89,11 +71,11 @@ function DoctorHome() {
     <div className="home_container">
       <div className="home__welcome">
         <h1>
-          Добро пожаловать, {user?.doctor_name || user?.username || "Врач"}!
+          Добро пожаловать, {profile?.doctor_name || user?.username || "Врач"}!
         </h1>
         <p className="home__subtitle">Личный кабинет врача</p>
       </div>
-      {isProfileLoaded && !profile && (
+      {profileChecked && !profile && (
         <div className="home__warning-banner">
           <p>⚠️ Для работы необходимо сначала заполнить данные врача.</p>
           <button
