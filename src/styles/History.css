@@ -81,7 +81,6 @@
 }
 
 .history-item:hover {
-  transform: translateY(-2px);
   border-color: var(--color-soft-cyan);
   box-shadow: var(--shadow-md);
 }
