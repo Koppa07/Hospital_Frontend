@@ -6,7 +6,7 @@ import { USER_INFO } from "../../constants";
 function Patients() {
   const savedUser = localStorage.getItem(USER_INFO);
   const currentUser = savedUser ? JSON.parse(savedUser) : null;
-  const canWrite = currentUser?.role === "ADMIN";
+  const canWrite = currentUser?.role === "ADMIN" || "REGISTRAR";
 
   const [patients, setPatients] = useState([]);
   const [filters, setFilters] = useState({

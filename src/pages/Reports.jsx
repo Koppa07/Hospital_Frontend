@@ -29,10 +29,6 @@ function Reports() {
             </div>
           </>
         )}
-        <div className="reports__list-item">
-          <Link to="">Скачать отчеты</Link>{" "}
-          {/*TODO сделать скачивание отчета */}
-        </div>
       </div>
     </div>
   );

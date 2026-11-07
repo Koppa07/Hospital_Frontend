@@ -1,9 +1,9 @@
-import api from "../../api";
 import "../../styles/home.css";
 import { USER_INFO } from "../../constants";
 import ChangePassword from "../ChangePassword";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import ReportDownload from "../ReportDownload";
 function RegistrarHome() {
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
@@ -14,6 +14,7 @@ function RegistrarHome() {
         <h1>Добро пожаловать, {user.username}!</h1>
         <p className="home__subtitle">Личный кабинет регистратора</p>
       </div>
+
       <div className="home__reports">
         <Link to="/reports" className="go-to">
           Справочники
@@ -39,6 +40,9 @@ function RegistrarHome() {
           Приемы
         </Link>
       </div>
+      <section className="home__section">
+        <ReportDownload />
+      </section>
       <section className="home__section">
         <button
           className="btn--second"

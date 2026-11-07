@@ -156,19 +156,6 @@
   font-weight: 600;
 }
 
-.history-item__diagnosis {
-  padding: 14px 16px;
-  background-color: rgba(160, 201, 203, 0.12);
-  border-left: 3px solid var(--color-soft-cyan);
-  border-radius: var(--radius-sm);
-}
-
-.history-item__recommendations {
-  padding: 14px 16px;
-  background-color: var(--color-cream-light);
-  border-radius: var(--radius-md);
-}
-
 .history__empty {
   display: flex;
   align-items: center;

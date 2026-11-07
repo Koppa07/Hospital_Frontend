@@ -149,9 +149,13 @@
 }
 
 .schedule__day.is-today,
-.schedule__day.is-selected,
 .schedule__day.is-selected.is-today {
   background: var(--color-accent);
+  color: #fff;
+}
+
+.schedule__day.is-selected {
+  background-color: var(--color-secondary);
   color: #fff;
 }
 

@@ -441,7 +441,9 @@ export const Schedule = () => {
           </article>
         ))}
         {!dayEvents.length && (
-          <div className="schedule__event-list-empty">На этот день событий нет</div>
+          <div className="schedule__event-list-empty">
+            На этот день событий нет
+          </div>
         )}
       </div>
     );
@@ -633,13 +635,18 @@ export const Schedule = () => {
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              className={`${isDoctor ? "btn--prime" : "btn--second"}`}
-              onClick={() => setCreateAppointmentOpen(true)}
-            >
-              + Новая запись
-            </button>
+            {!isDoctor && (
+              <div>
+                <button
+                  type="button"
+                  className="schedule__action-button btn--prime"
+                  onClick={() => setCreateAppointmentOpen(true)}
+                >
+                  + Новая запись
+                </button>
+              </div>
+            )}
+
             {canManageSchedule && (
               <button
                 type="button"

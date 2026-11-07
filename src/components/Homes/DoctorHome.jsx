@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import "../../styles/home.css";
 import AppointmentCard from "../Appointments/AppointmentCard";
 import { useOutletContext } from "react-router-dom";
+import ReportDownload from "../ReportDownload";
 function DoctorHome() {
   const { profile, setProfile, setProfileExists, profileChecked } =
     useOutletContext();
@@ -88,6 +89,7 @@ function DoctorHome() {
       )}
 
       {error && <div className="home__error">{error}</div>}
+
       <div className="home__actions">
         {profile && (
           <button
@@ -123,6 +125,11 @@ function DoctorHome() {
           Расписание
         </Link>
       </div>
+      {profile && (
+        <section className="home__section">
+          <ReportDownload isDoctor />
+        </section>
+      )}
       <section className="home__section">
         <button
           className="btn--second"

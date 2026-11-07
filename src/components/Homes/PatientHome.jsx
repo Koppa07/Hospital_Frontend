@@ -10,12 +10,8 @@ import "../../styles/home.css";
 import AppointmentCard from "../Appointments/AppointmentCard";
 import { useOutletContext } from "react-router-dom";
 function PatientHome() {
-  const {
-    profile,
-    setProfile,
-    setProfileExists,
-    profileChecked,
-  } = useOutletContext();
+  const { profile, setProfile, setProfileExists, profileChecked } =
+    useOutletContext();
   const savedUser = localStorage.getItem(USER_INFO);
   const user = savedUser ? JSON.parse(savedUser) : null;
 
@@ -195,12 +191,26 @@ function PatientHome() {
                 </div>
                 <div className="history-item__content">
                   <p>
-                    <strong>Диагноз:</strong> {item.disease || "Не указан"}
+                    <strong>Диагноз:</strong>{" "}
+                    {item.disease_title || item.disease || "Не указан"}
                   </p>
                   <p>
                     <strong>Назначения / Рекомендации:</strong>{" "}
-                    {item.prescription || item.recommendations || "—"}
+                    {item.prescription?.recommendations ||
+                      item.recommendations ||
+                      "—"}
                   </p>
+                  {item.prescription?.drugs?.length > 0 && (
+                    <p>
+                      <strong>Лекарства:</strong>{" "}
+                      {item.prescription.drugs
+                        .map(
+                          (drug) =>
+                            `${drug.drug_title} — ${drug.dosage}`,
+                        )
+                        .join("; ")}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
