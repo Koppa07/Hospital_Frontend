@@ -42,16 +42,19 @@ const savePdf = (response, fallbackFilename) => {
 function ReportDownload({ isDoctor = false }) {
   const [doctors, setDoctors] = useState([]);
   const [doctorId, setDoctorId] = useState("");
-  const [startDate, setStartDate] = useState(getToday);
-  const [endDate, setEndDate] = useState(getToday);
+  const [dateRanges, setDateRanges] = useState(() => {
+    const today = getToday();
+    return {
+      doctor: { start: today, end: today },
+      diagnosesDrugs: { start: today, end: today },
+      appointmentStatus: { start: today, end: today },
+      doctorLoad: { start: today, end: today },
+    };
+  });
+  const [asOfDate, setAsOfDate] = useState(getToday);
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(true);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [error, setError] = useState("");
-  const [diagnosisDateFrom, setDiagnosisDateFrom] = useState(getToday);
-  const [diagnosisDateTo, setDiagnosisDateTo] = useState(getToday);
-  const [isDownloadingDiagnosisDrugs, setIsDownloadingDiagnosisDrugs] =
-    useState(false);
-  const [diagnosisDrugsError, setDiagnosisDrugsError] = useState("");
+  const [downloadingReport, setDownloadingReport] = useState("");
+  const [reportErrors, setReportErrors] = useState({});
 
   useEffect(() => {
     let isCurrentRequest = true;
@@ -71,12 +74,13 @@ function ReportDownload({ isDoctor = false }) {
         }
       } catch (loadError) {
         if (isCurrentRequest) {
-          setError(
-            loadError.response?.data?.detail ||
+          setReportErrors((previous) => ({
+            ...previous,
+            doctor: loadError.response?.data?.detail ||
               (isDoctor
                 ? "Не удалось загрузить профиль врача."
                 : "Не удалось загрузить список врачей."),
-          );
+          }));
         }
       } finally {
         if (isCurrentRequest) {
@@ -91,72 +95,121 @@ function ReportDownload({ isDoctor = false }) {
     };
   }, [isDoctor]);
 
-  const handleDownload = async (event) => {
+  const handleReportDownload = async (
+    event,
+    reportKey,
+    endpoint,
+    params,
+    fallbackFilename,
+  ) => {
     event.preventDefault();
-    setError("");
+    setReportErrors((previous) => ({ ...previous, [reportKey]: "" }));
 
-    if (!doctorId) {
-      setError("Выберите врача.");
+    const dateFrom = params.date_from || params.start_date;
+    const dateTo = params.date_to || params.end_date;
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      setReportErrors((previous) => ({
+        ...previous,
+        [reportKey]: "Дата начала не может быть позже даты окончания.",
+      }));
       return;
     }
-    if (startDate > endDate) {
-      setError("Дата начала не может быть позже даты окончания.");
-      return;
-    }
 
-    setIsDownloading(true);
+    setDownloadingReport(reportKey);
     try {
-      const response = await api.get(`/reports/doctor/${doctorId}/pdf/`, {
-        params: { start_date: startDate, end_date: endDate },
+      const response = await api.get(endpoint, {
+        params,
         responseType: "blob",
       });
-      savePdf(
-        response,
-        `analytics_doctor_${doctorId}_${startDate}_${endDate}.pdf`,
-      );
+      savePdf(response, fallbackFilename);
     } catch (downloadError) {
-      setError(await getErrorMessage(downloadError));
+      const errorMessage = await getErrorMessage(downloadError);
+      setReportErrors((previous) => ({
+        ...previous,
+        [reportKey]: errorMessage,
+      }));
     } finally {
-      setIsDownloading(false);
+      setDownloadingReport("");
     }
   };
 
-  const handleDiagnosisDrugsDownload = async (event) => {
-    event.preventDefault();
-    setDiagnosisDrugsError("");
+  const renderDateRange = (rangeKey) => {
+    const { start, end } = dateRanges[rangeKey];
+    const updateDate = (field, value) =>
+      setDateRanges((previous) => ({
+        ...previous,
+        [rangeKey]: { ...previous[rangeKey], [field]: value },
+      }));
 
-    if (diagnosisDateFrom > diagnosisDateTo) {
-      setDiagnosisDrugsError(
-        "Дата начала не может быть позже даты окончания.",
-      );
-      return;
-    }
-
-    setIsDownloadingDiagnosisDrugs(true);
-    try {
-      const response = await api.get("/reports/diagnoses-drugs/", {
-        params: {
-          date_from: diagnosisDateFrom,
-          date_to: diagnosisDateTo,
-        },
-        responseType: "blob",
-      });
-      savePdf(
-        response,
-        `diagnosis_drugs_${diagnosisDateFrom}_${diagnosisDateTo}.pdf`,
-      );
-    } catch (downloadError) {
-      setDiagnosisDrugsError(await getErrorMessage(downloadError));
-    } finally {
-      setIsDownloadingDiagnosisDrugs(false);
-    }
+    return (
+      <div className="reports__download-dates">
+        <label className="reports__download-field">
+          С
+          <input
+            className="my__input"
+            type="date"
+            value={start}
+            max={end}
+            onChange={(event) => updateDate("start", event.target.value)}
+            required
+          />
+        </label>
+        <label className="reports__download-field">
+          По
+          <input
+            className="my__input"
+            type="date"
+            value={end}
+            min={start}
+            onChange={(event) => updateDate("end", event.target.value)}
+            required
+          />
+        </label>
+      </div>
+    );
   };
+
+  const renderError = (reportKey) =>
+    reportErrors[reportKey] && (
+      <div className="reports__download-error" role="alert">
+        {reportErrors[reportKey]}
+      </div>
+    );
+
+  const renderSubmit = (reportKey) => (
+    <button
+      type="submit"
+      className="btn--prime"
+      disabled={
+        downloadingReport !== "" ||
+        (reportKey === "doctor" && isLoadingDoctors)
+      }
+    >
+      {downloadingReport === reportKey
+        ? "Формирование отчета..."
+        : "Скачать PDF"}
+    </button>
+  );
 
   return (
     <div className="reports__downloads">
+      <h2>Формирование отчетов</h2>
       <div className="reports__download">
-        <h3>Скачать отчет о работе врача</h3>
-        <form onSubmit={handleDownload}>
+        <h3>Отчет о работе врача</h3>
+        <form
+          onSubmit={(event) =>
+            handleReportDownload(
+              event,
+              "doctor",
+              `/reports/doctor/${doctorId}/pdf/`,
+              {
+                start_date: dateRanges.doctor.start,
+                end_date: dateRanges.doctor.end,
+              },
+              `analytics_doctor_${doctorId}_${dateRanges.doctor.start}_${dateRanges.doctor.end}.pdf`,
+            )
+          }
+        >
           {!isDoctor && (
             <label className="reports__download-field">
               Врач
@@ -188,93 +241,108 @@ function ReportDownload({ isDoctor = false }) {
               Отчет будет сформирован по вашему профилю.
             </p>
           )}
-          <div className="reports__download-dates">
-            <label className="reports__download-field">
-              С
-              <input
-                className="my__input"
-                type="date"
-                value={startDate}
-                max={endDate}
-                onChange={(event) => setStartDate(event.target.value)}
-                required
-              />
-            </label>
-            <label className="reports__download-field">
-              По
-              <input
-                className="my__input"
-                type="date"
-                value={endDate}
-                min={startDate}
-                onChange={(event) => setEndDate(event.target.value)}
-                required
-              />
-            </label>
-          </div>
-          {error && (
-            <div className="reports__download-error" role="alert">
-              {error}
-            </div>
-          )}
-          <button
-            type="submit"
-            className="btn--prime"
-            disabled={
-              isDownloading ||
-              isLoadingDoctors ||
-              !doctorId ||
-              (!isDoctor && doctors.length === 0)
-            }
-          >
-            {isDownloading ? "Формирование отчета..." : "Скачать PDF"}
-          </button>
+          {renderDateRange("doctor")}
+          {renderError("doctor")}
+          {renderSubmit("doctor")}
         </form>
       </div>
+
       {!isDoctor && (
-        <div className="reports__download">
-          <h3>Скачать отчет по диагнозам и препаратам</h3>
-          <form onSubmit={handleDiagnosisDrugsDownload}>
-            <div className="reports__download-dates">
-              <label className="reports__download-field">
-                С
-                <input
-                  className="my__input"
-                  type="date"
-                  value={diagnosisDateFrom}
-                  max={diagnosisDateTo}
-                  onChange={(event) => setDiagnosisDateFrom(event.target.value)}
-                  required
-                />
-              </label>
-              <label className="reports__download-field">
-                По
-                <input
-                  className="my__input"
-                  type="date"
-                  value={diagnosisDateTo}
-                  min={diagnosisDateFrom}
-                  onChange={(event) => setDiagnosisDateTo(event.target.value)}
-                  required
-                />
-              </label>
-            </div>
-            {diagnosisDrugsError && (
-              <div className="reports__download-error" role="alert">
-                {diagnosisDrugsError}
-              </div>
-            )}
-            <button
-              type="submit"
-              className="btn--prime"
-              disabled={isDownloadingDiagnosisDrugs}
+        <>
+          <div className="reports__download">
+            <h3>Отчет по диагнозам и препаратам</h3>
+            <form
+              onSubmit={(event) =>
+                handleReportDownload(
+                  event,
+                  "diagnoses-drugs",
+                  "/reports/diagnoses-drugs/",
+                  {
+                    date_from: dateRanges.diagnosesDrugs.start,
+                    date_to: dateRanges.diagnosesDrugs.end,
+                  },
+                  `diagnosis_drugs_${dateRanges.diagnosesDrugs.start}_${dateRanges.diagnosesDrugs.end}.pdf`,
+                )
+              }
             >
-              {isDownloadingDiagnosisDrugs
-                ? "Формирование отчета..."
-                : "Скачать PDF"}
-            </button>
-          </form>
-        </div>
+              {renderDateRange("diagnosesDrugs")}
+              {renderError("diagnoses-drugs")}
+              {renderSubmit("diagnoses-drugs")}
+            </form>
+          </div>
+
+          <div className="reports__download">
+            <h3>Возрастная структура пациентов</h3>
+            <form
+              onSubmit={(event) =>
+                handleReportDownload(
+                  event,
+                  "patient-age",
+                  "/reports/patient-age/",
+                  { as_of_date: asOfDate },
+                  `patient_age_report_${asOfDate}.pdf`,
+                )
+              }
+            >
+              <label className="reports__download-field">
+                Дата отчета
+                <input
+                  className="my__input"
+                  type="date"
+                  value={asOfDate}
+                  onChange={(event) => setAsOfDate(event.target.value)}
+                  required
+                />
+              </label>
+              {renderError("patient-age")}
+              {renderSubmit("patient-age")}
+            </form>
+          </div>
+
+          <div className="reports__download">
+            <h3>Статусы записей на прием</h3>
+            <form
+              onSubmit={(event) =>
+                handleReportDownload(
+                  event,
+                  "appointment-status",
+                  "/reports/appointment-status/",
+                  {
+                    date_from: dateRanges.appointmentStatus.start,
+                    date_to: dateRanges.appointmentStatus.end,
+                  },
+                  `appointment_status_report_${dateRanges.appointmentStatus.start}_${dateRanges.appointmentStatus.end}.pdf`,
+                )
+              }
+            >
+              {renderDateRange("appointmentStatus")}
+              {renderError("appointment-status")}
+              {renderSubmit("appointment-status")}
+            </form>
+          </div>
+
+          <div className="reports__download">
+            <h3>Загрузка врачей</h3>
+            <form
+              onSubmit={(event) =>
+                handleReportDownload(
+                  event,
+                  "doctor-load",
+                  "/reports/doctor-load/",
+                  {
+                    date_from: dateRanges.doctorLoad.start,
+                    date_to: dateRanges.doctorLoad.end,
+                  },
+                  `doctor_load_report_${dateRanges.doctorLoad.start}_${dateRanges.doctorLoad.end}.pdf`,
+                )
+              }
+            >
+              {renderDateRange("doctorLoad")}
+              {renderError("doctor-load")}
+              {renderSubmit("doctor-load")}
+            </form>
+          </div>
+        </>
       )}
     </div>
   );
