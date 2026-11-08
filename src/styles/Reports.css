@@ -41,6 +41,13 @@
   gap: 18px;
 }
 
+.reports__downloads > h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-deep-teal);
+  font-size: 32px;
+}
+
 .reports__download h3 {
   margin: 0 0 20px;
   color: var(--color-deep-teal);
